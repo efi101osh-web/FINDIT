@@ -1,12 +1,17 @@
 'use strict';
 
-// Automated tests for the Stage 2 foundation. Test IDs (T-xxx-nn) refer to
-// documentation/TEST_PLAN.md. The tests call the app directly (no network port needed).
+// Automated tests for the HTTP foundation. Test IDs (T-xxx-nn) refer to
+// documentation/TEST_PLAN.md. The tests call the app directly (no network port needed)
+// and build it from explicit test settings, never from your private .env file.
 
 const request = require('supertest');
 const express = require('express');
-const app = require('../src/app');
-const errorHandler = require('../src/middleware/errorHandler');
+const { createApp } = require('../src/app');
+const { loadConfig } = require('../src/config/env');
+const createErrorHandler = require('../src/middleware/errorHandler');
+
+const testConfig = loadConfig({ NODE_ENV: 'test' });
+const app = createApp(testConfig);
 
 describe('GET /api/v1/health', () => {
   test('T-HLT-01: responds 200 in the standard success format', async () => {
@@ -18,6 +23,12 @@ describe('GET /api/v1/health', () => {
     expect(res.body.data.status).toBe('ok');
     expect(typeof res.body.data.uptimeSeconds).toBe('number');
     expect(Number.isNaN(new Date(res.body.data.time).getTime())).toBe(false);
+  });
+
+  test('reports the database as "disconnected" when no connection exists (server is alive, so still 200)', async () => {
+    const res = await request(app).get('/api/v1/health');
+    expect(res.status).toBe(200);
+    expect(res.body.data.database).toBe('disconnected');
   });
 
   test('does not advertise the framework in response headers', async () => {
@@ -85,7 +96,7 @@ describe('unexpected server errors never leak internals', () => {
   crashing.get('/async-crash', async () => {
     throw new Error('SECRET internal detail: /etc/passwd db password');
   });
-  crashing.use(errorHandler);
+  crashing.use(createErrorHandler(testConfig));
 
   test.each(['/sync-crash', '/async-crash'])(
     'T-SEC-04: %s gives a generic 500 with no stack trace or details',

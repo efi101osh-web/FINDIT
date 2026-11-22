@@ -12,12 +12,12 @@ Start with [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md). To see what is actually b
 | [REQUIREMENTS.md](REQUIREMENTS.md) | Numbered functional and non-functional requirements, and the roles and permissions matrix | Complete (Stage 1) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System design, folder structure, request flow, status flows, matching, design tokens | Design (Stage 1) |
 | [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) | Collections, fields, validation, indexes, relationships | Design (Stage 1) |
-| [API_CONTRACT.md](API_CONTRACT.md) | All 37 planned endpoints with requests, responses, errors, examples | Planned. Only `/health` exists (partly) |
-| [SECURITY_PLAN.md](SECURITY_PLAN.md) | Threats, the 27 controls, accepted risks, rules for the repository | Plan. No control complete; four partly started |
+| [API_CONTRACT.md](API_CONTRACT.md) | All 37 planned endpoints with requests, responses, errors, examples | Planned. Only `/health` is implemented |
+| [SECURITY_PLAN.md](SECURITY_PLAN.md) | Threats, the 27 controls, accepted risks, rules for the repository | Plan. Two controls implemented, three partly started |
 | [DECISIONS.md](DECISIONS.md) | Why each technical choice was made | Living |
-| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. First automated tests run in Stage 2 (see results log) |
+| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 71 automated tests so far (see results log) |
 | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | What exists and what is verified | Living |
-| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop preparation + running the backend) |
+| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, running the backend) |
 | [USER_GUIDE.md](USER_GUIDE.md) | How to use the finished app | Outline only (written in Stage 19) |
 | [TEAM_RESPONSIBILITIES.md](TEAM_RESPONSIBILITIES.md) | Who does what (non-coding roles for the team) | Draft. Names needed |
 | [diagrams/](diagrams/) | Mermaid diagrams (GitHub draws them automatically) | Complete (Stage 1) |

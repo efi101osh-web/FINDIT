@@ -1,6 +1,6 @@
 # FINDIT: Test Plan
 
-> **Status:** The plan is written. Automated tests began in Stage 2 (20 Jest tests, covering 4 of the 84 planned backend cases, one only partly). Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+> **Status:** The plan is written (88 backend cases). Automated tests began in Stage 2 and now number 71 Jest tests, covering 10 of the planned backend cases. Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
 
 ## 1. Strategy
 
@@ -17,7 +17,7 @@
 
 **Test data:** fake only. Seed accounts: one admin, one recovery officer, several users (credentials generated from `.env`, never committed).
 
-**Database for tests:** see [DECISIONS.md](DECISIONS.md) D-018 (Open).
+**Database for tests:** a real MongoDB started on the machine running the tests, in memory, deleted afterwards (D-018 in [DECISIONS.md](DECISIONS.md)). `npm test` skips those tests (shown as "skipped", never "passed"); `npm run test:db` runs them. Atlas is checked separately with `npm run check:db` on the owner's laptop.
 
 ## 2. Backend test cases
 
@@ -34,6 +34,14 @@ Status for all: `Not run`.
 | T-SEC-02 | CORS from a non-allowed origin | Browser request blocked |
 | T-SEC-03 | 11 rapid login attempts | 429 `RATE_LIMITED` |
 | T-SEC-04 | Any 500 error | No stack trace or internals in the response |
+
+### Database connection
+| ID | Case | Expected |
+|---|---|---|
+| T-DB-01 | Connect to a port where nothing listens | Fails within seconds with a plain-English explanation, no `[object Object]` |
+| T-DB-02 | Connect to a working database | State is `connected`, using the requested database name |
+| T-DB-03 | Disconnect while the server is running | Health says `disconnected` and the server stays up (still 200) |
+| T-DB-04 | Wrong password against a real MongoDB with login | Real authentication error, explained in plain English, password never shown |
 
 ### Authentication and users
 | ID | Case | Expected |
@@ -180,3 +188,5 @@ Real results only, with the date and where they were run.
 | 2026-11-22 | Cloud container, real server + `curl` | Manual check of health, 404, bad JSON, shutdown, bad settings, port clash | ✅ As expected | See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) section 4 |
 | 2026-11-22 | Fresh clone from GitHub (Linux container) | Same 20 tests, plus manual server check | ✅ 20 of 20 pass after a clean `npm install` | Confirms the pushed repository is complete and self-contained |
 | 2026-11-22 | **Owner's laptop** (Windows, PowerShell, Node 24.20.0) | The same 20 Jest tests; manual check of the health and 404 pages in a browser | ✅ 20 of 20 pass (7.5 s); both pages as expected | Reported by the owner. First run on Node 24 |
+| 2026-11-22 | Cloud container, real MongoDB 8.0.17 | Stage 3: T-HLT-01 (full), T-SEC-01, T-SEC-02, T-DB-01 to T-DB-04, T-INV-02, T-INV-03, T-SEC-04, plus settings, secret-hygiene and error-explanation tests | ✅ `npm run test:db`: 71 of 71 pass. Plain `npm test`: 64 pass, 7 skipped (database tests) | Shown to fail when code was deliberately broken (3 break-ins, all caught). Also checked end to end with the real server and `check:db` |
+| *(pending)* | **Owner's laptop** | Plain `npm test` after Stage 3 (expect 64 passed, 7 skipped), then `npm run check:db` against Atlas | Needs laptop | Atlas cannot be reached from the container |

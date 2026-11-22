@@ -1,8 +1,8 @@
 # FINDIT: Setup Guide
 
-> **Status: PARTIAL.** Part 1 (getting your laptop ready) and Part 2 (running the backend) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
+> **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend) and Part 3 (create the database and run the server) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0).** If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB. It has not yet been run against MongoDB Atlas, because the container cannot reach Atlas. Your run is the first real Atlas test.** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -63,9 +63,9 @@ A *branch* is a separate draft of the project. `main` is conventionally the "off
 
 ---
 
-## Part 2. Run the backend and check it works
+## Part 2. Install the backend and run its tests
 
-**Goal:** start the FINDIT server on your laptop and see it answer. This proves your laptop, Node.js and the project work together.
+**Goal:** download the libraries and run the automated tests. This needs **no database and no accounts**, and it proves your laptop and the project work together.
 
 ### 2.1 Get the latest code
 
@@ -85,54 +85,15 @@ cd backend
 
 ### 2.3 Install the libraries
 
+Run this again after any `git pull` that changes `package.json`:
+
 ```bash
 npm install
 ```
 
-**Success looks like:** a line such as `added 362 packages` (anything from about 362 to 364 is normal; it varies slightly by operating system) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
+**Success looks like:** a line such as `added 413 packages` (a few fewer on Windows is normal) and no red `ERR!` lines. Yellow `deprecated` warnings and a note about "moderate severity vulnerabilities" are expected and harmless. They come from the test tool, not our code. **Do not run `npm audit fix --force`.**
 
-### 2.4 (Optional) create your settings file
-
-The defaults work, so you can skip this for now. When later stages need secrets, you will copy the example file like this:
-
-```bash
-cp .env.example .env
-```
-
-On Windows Command Prompt or PowerShell use `copy .env.example .env` instead. The real `.env` file is private and Git ignores it.
-
-### 2.5 Start the server
-
-```bash
-npm run dev
-```
-
-**Success looks like exactly this:**
-
-```text
-> findit-backend@0.1.0 dev
-> node --watch src/server.js
-
-FINDIT API is running (development mode).
-Health check: http://localhost:4000/api/v1/health
-Press Ctrl+C to stop.
-```
-
-The terminal now stays busy. That is correct: the server is running. If Windows shows a firewall pop-up for Node.js, choose **Allow access on private networks**.
-
-### 2.6 Check it in your browser
-
-Open <http://localhost:4000/api/v1/health>. **Success looks like:**
-
-```json
-{"success":true,"data":{"status":"ok","uptimeSeconds":12,"time":"2026-11-22T15:00:00.000Z"}}
-```
-
-(`uptimeSeconds` and `time` will differ.) Also try <http://localhost:4000/api/v1/nope>. You should see a tidy error message, `{"success":false,"error":{"code":"NOT_FOUND", ...}}`, and not a technical crash page.
-
-### 2.7 Run the automated tests
-
-Stop the server with **Ctrl+C** (on Windows, type `Y` if it asks `Terminate batch job (Y/N)?`), or open a second terminal (**Terminal → New Terminal**, then `cd backend`), and run:
+### 2.4 Run the automated tests
 
 ```bash
 npm test
@@ -141,21 +102,154 @@ npm test
 **Success looks like:**
 
 ```text
-Test Suites: 2 passed, 2 total
-Tests:       20 passed, 20 total
+[tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
+
+Test Suites: 2 skipped, 4 passed, 4 of 6 total
+Tests:       7 skipped, 64 passed, 71 total
 ```
 
-### 2.8 If something goes wrong
+The **7 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
+
+### 2.5 If something goes wrong
 
 | What you see | Meaning and fix |
 |---|---|
-| `'npm' is not recognized` / `command not found` | Node.js is not installed, or the terminal was opened before installing it. Install Node 22 and **close and reopen VS Code** |
-| `Port 4000 is already in use` | Another program is using that port. Close it, or add `PORT=4001` to `backend/.env` |
-| `Settings problem: Invalid PORT ...` | Your `.env` has a bad value. Fix or delete that line |
+| `'npm' is not recognized` / `command not found` | Node.js is not installed, or the terminal was opened before installing it. Install Node 22 or 24 and **close and reopen VS Code** |
 | `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x or 24.x** |
 | `running scripts is disabled on this system` (Windows PowerShell) | PowerShell's safety setting is blocking npm's script. Type `npm.cmd` instead of `npm` (same program), or use Command Prompt |
-| Browser says "This site can't be reached" | The server is not running. Look at the terminal for the error |
-| Anything else | Copy the **whole** terminal text and send it to me |
+| Any test says **failed** | Copy the **whole** terminal text and send it to the assistant |
+
+---
+
+## Part 3. Create the free database and run the server
+
+**Goal:** create your own free database in the cloud (MongoDB Atlas), connect FINDIT to it, and see the health check say `"database":"connected"`.
+
+> The Atlas website changes its screens from time to time. The steps below describe *what* to do; button names may look slightly different. If you get stuck, take a screenshot (**cover any passwords first**) or describe what you see.
+>
+> **Golden rule:** your *connection string* contains your database password. **Never paste it into chat, commit it, screenshot it or share it.** It lives only in `backend/.env`, which Git ignores. If it ever leaks, change the database password in Atlas straight away.
+
+### 3.1 Create an Atlas account
+
+Go to <https://www.mongodb.com/atlas> and choose **Try Free**. Sign up with your email or Google account, verify your email if asked, and answer the welcome questions (any answers are fine).
+
+### 3.2 Create a free cluster
+
+Create a new deployment (also called a *cluster*). Choose the **M0 / Free** option. Pick any cloud provider, choose the region **nearest to you**, and name it `findit`. Create it, then wait a minute or two while it starts.
+
+The free tier does not need a payment card. **If Atlas asks for card details for the free option, stop and tell the assistant.**
+
+### 3.3 Create a database user
+
+In the left menu go to **Database Access** (under *Security*) → **Add New Database User**.
+
+- Authentication: **Password**
+- Username: `findit_app`
+- Password: make your own, **letters and digits only**, at least 12 characters, e.g. a mix like `Kq7mTz2vWb9XcL4n`. (Special characters can break the connection string.) Save it somewhere private, such as a password manager. Do not save it in the project.
+- Privileges: **Read and write to any database**
+
+Click **Add User**.
+
+### 3.4 Allow your computer to connect
+
+In the left menu go to **Network Access** → **Add IP Address** → **Add Current IP Address** → **Confirm**.
+
+Atlas only accepts connections from addresses on this list. **When you change network** (home Wi-Fi, campus Wi-Fi, a phone hotspot), your address changes, and you must repeat this step. It is the most common reason for connection failures. For a short demo on an unknown network you can choose **Allow access from anywhere**, which is less secure, so remove it afterwards.
+
+### 3.5 Copy the connection string
+
+Go to **Database** → find your cluster → **Connect** → **Drivers** → choose **Node.js** → copy the connection string. It looks like this (with your own cluster address):
+
+```text
+mongodb+srv://<db_username>:<db_password>@cluster0.abc12.mongodb.net/?retryWrites=true&w=majority&appName=findit
+```
+
+Replace `<db_username>` with `findit_app` and `<db_password>` with your password. **Replace each placeholder completely, including the `<` and `>` signs.**
+
+### 3.6 Create your private settings file
+
+In the `backend` folder, copy the example file to a new file named `.env`:
+
+```bash
+cp .env.example .env
+```
+
+On Windows Command Prompt or PowerShell use `copy .env.example .env` instead. Open `backend/.env` in VS Code and set the line:
+
+```text
+MONGODB_URI=<paste your finished connection string here, with no quotes and no spaces>
+```
+
+Save the file. **Check Git ignores it:** run `git status`. The file `.env` must **not** appear in the list. (If it does, stop and tell the assistant.)
+
+### 3.7 Check the connection
+
+```bash
+npm run check:db
+```
+
+**Success looks like this** (the version and address will differ):
+
+```text
+Connecting to MongoDB (waiting up to 10 seconds)...
+SUCCESS: connected to MongoDB.
+  Database name : findit
+  Server version: 8.0.x
+  Server address: ac-abc12-shard-00-00.abc12.mongodb.net
+```
+
+This command only *reads*: it never changes your data, and it never prints your password. If it fails, it explains what to check. See 3.9. It is safe to paste its output to the assistant.
+
+### 3.8 Start the server
+
+```bash
+npm run dev
+```
+
+**Success looks like:**
+
+```text
+> findit-backend@0.1.0 dev
+> node --watch src/server.js
+
+Connected to MongoDB (database "findit").
+FINDIT API is running (development mode).
+Health check: http://localhost:4000/api/v1/health
+Press Ctrl+C to stop.
+```
+
+Open <http://localhost:4000/api/v1/health>. You should now see `"database":"connected"`:
+
+```json
+{"success":true,"data":{"status":"ok","database":"connected","uptimeSeconds":12,"time":"2026-11-22T15:00:00.000Z"}}
+```
+
+If Windows shows a firewall pop-up for Node.js, choose **Allow access on private networks**. Stop the server with **Ctrl+C** (on Windows, type `Y` if it asks `Terminate batch job (Y/N)?`).
+
+### 3.9 If something goes wrong
+
+The program explains problems in plain words. The common ones:
+
+| Message starts with | Meaning and fix |
+|---|---|
+| `Settings problem: MONGODB_URI is not set` | The `.env` file is missing, in the wrong folder (it must be inside `backend`), or the line is empty. Redo 3.6 |
+| `Settings problem: MONGODB_URI still contains a placeholder` | You left `<db_password>` (or `<db_username>`) in. Replace the whole placeholder including the `<` `>` |
+| `The database rejected the username or password` | Wrong username or password, or the password has special characters. In Atlas → Database Access, edit the user and set a new letters-and-digits password. Update `.env` |
+| `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4. Also check your internet, a VPN, and that the cluster is not paused |
+| `The database address could not be found` | The part after `@` in the connection string is wrong, or you are offline. Copy the string from Atlas again |
+| `Port 4000 is already in use` | Another program uses the port. Close it, or add `PORT=4001` to `backend/.env` |
+
+If it is none of these, copy the **whole** terminal text and send it. (The tool hides your password in its messages, but check before pasting.)
+
+### 3.10 Optional: run the database tests on your laptop
+
+**You can skip this.** The assistant runs these tests on every change in its own environment. Running them yourself needs a **one-time download of a test copy of MongoDB: about 500 to 800 MB on Windows**. It is stored in your user folder (outside the project) and reused. Only do this on a good connection, with a few GB of free disk space (my estimate; I have not measured it on Windows).
+
+```bash
+npm run test:db
+```
+
+On success you will see `Tests: 71 passed, 71 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
 
 ---
 
@@ -163,7 +257,6 @@ Tests:       20 passed, 20 total
 
 | Part | Written in |
 |---|---|
-| 3. Create the MongoDB Atlas database and connect | Stage 3 |
 | 4. Create the first admin account | Stage 4 |
 | 5. Test the API with Postman | Stage 4–6 |
 | 6. Create and run the mobile app in Expo Go | Stage 7 |

@@ -100,10 +100,12 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Status:** Accepted
 **Why:** macOS reserves port 5000 for AirPlay on recent versions. 4000 is free on most machines and is configurable via `PORT`.
 
-## D-018: ⚠️ Test database strategy
-**Status:** **Open: decide at Stage 3**
-**Issue:** The Stage 1 environment check found that the cloud container used for coding **cannot reach MongoDB Atlas or the MongoDB test-binary download host** (both blocked by the network policy). Options: (a) run database-connected tests on your laptop against a *separate* Atlas test database; (b) find a MongoDB binary that can be installed here; (c) both.
-**Rule:** Whatever is chosen, any check that could not be executed here is labelled **"needs your laptop"** with exact steps, and is never reported as passed.
+## D-018: Test database strategy
+**Status:** Accepted (Stage 3). *Resolves the question left open in Stage 1.*
+**Decision:** Tests that need a database run against a **real MongoDB** started on the machine running the tests (`mongodb-memory-server-core`, MongoDB 8.0.17, in memory, thrown away afterwards). It never touches Atlas. Plain `npm test` **skips** those tests and says so. `npm run test:db` runs them. In the coding container the assistant always runs `npm run test:db`. A separate, read-only `npm run check:db` checks the real Atlas connection from the owner's laptop.
+**Why:** Mocking the database would give false confidence. The test copy of MongoDB is a one-time download of about 99 MB on Linux but **500 to 800 MB on Windows** (the Windows files include debugging data, for every version), so it is not forced on the owner's laptop. If `test:db` is requested and the database cannot start, the run **fails**. It never silently skips.
+**Rule that stays:** any check that could not be run is labelled "needs your laptop". It is never reported as passed.
+**Consequence:** Atlas itself (accounts, network allow-list, the real cluster) can only be verified on the owner's laptop, because the container cannot reach it.
 
 ## D-019: ⚠️ Expo SDK version
 **Status:** **Open: decide at Stage 7**
@@ -130,6 +132,26 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Decision:** Git commits carry the owner's name and email as author, with a `Co-Authored-By` trailer for Claude. A `CLAUDE.md` file at the repo root records the owner's standing instructions so that any new session starts with the same rules.
 **Why:** The owner wants authorship on the work for the academic record. Sessions do not remember earlier chats, but they do read `CLAUDE.md`.
 **Note:** Commit author details are visible to anyone who can see the repository. The owner chose which email to use. GitHub also offers a private "noreply" address if they prefer.
+
+## D-024: A `findit` cloud environment allows one extra download host
+**Status:** Accepted (Stage 3)
+**Decision:** A personal environment named `findit` (network: package registries as before, plus `fastdl.mongodb.org`) was created at the owner's approval, so the assistant can download the test copy of MongoDB. Other projects stay on the Default environment.
+**Why:** The Stage 1 check showed that host returned 403 from the container's network policy. Atlas itself uses a different kind of connection that the container's network cannot carry, so that stays blocked.
+
+## D-025: Database name is a setting; the connection string is handled as a secret
+**Status:** Accepted (Stage 3)
+**Decision:** `MONGODB_DB_NAME` (default `findit`) chooses the database inside the cluster, so the owner can paste Atlas's connection string unedited (apart from the password). The connection string is stored as a non-enumerable property of the config (printing or JSON-ing the config cannot reveal it), error text is redacted of the password in both encoded and decoded form, and placeholders such as `<db_password>` are refused with a plain explanation. Settings validation never reads a file, so tests cannot touch a developer's real `.env`.
+**Why:** Beginners commonly leave placeholders in, mis-encode passwords, or paste secrets into chats. These guards turn each into a clear message.
+
+## D-026: A test-only workaround for the MongoDB driver under Jest
+**Status:** Accepted (Stage 3)
+**Finding:** The driver (7.8) loads Node's `os` module through a dynamic `import()`, which Jest's sandbox does not support. Inside Jest the driver then sends an empty handshake and MongoDB answers *"Missing required sub-document 'driver'"*. Confirmed: the same code connects fine in plain Node with both MongoDB 8.0.17 and 8.2.6.
+**Decision:** Tests pass the driver's `runtimeAdapters: { os }` option through `tests/helpers/database.js`. The application code does not use it (the driver marks the option experimental, and real Node does not need it).
+**Consequence:** Any future test that connects must use the helper (`connectTestDatabase`).
+
+## D-027: Library versions chosen in Stage 3
+**Status:** Accepted
+Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-core 11.4.0. All support Node 22 and 24. Mongoose 9 is a recent major version, so each Mongoose feature used from Stage 4 is verified by a test against the real database instead of assumed from older versions.
 
 ---
 

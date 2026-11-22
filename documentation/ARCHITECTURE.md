@@ -68,7 +68,7 @@ backend/
 
 | Folder | Purpose | Example files (planned) |
 |---|---|---|
-| `config/` | Everything "set up once": reads `.env`, validates it at start-up (fails fast if a secret is missing), connects to MongoDB, holds the enumerations from [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md#3-shared-value-lists-enumerations) | `env.js`, `db.js`, `constants.js` |
+| `config/` | Everything "set up once": reads `.env`, validates it at start-up (fails fast if a secret is missing), connects to MongoDB, holds the enumerations from [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md#3-shared-value-lists-enumerations) | `env.js`, `db.js` (`constants.js` is added in Stage 4) |
 | `models/` | One Mongoose schema per collection, with validation and indexes | `User.js`, `Item.js`, `Claim.js`, `Notification.js`, `RecoveryRecord.js`, `AuditRecord.js` |
 | `validators/` | Strict [Zod](https://zod.dev) schemas that describe exactly what each endpoint accepts. Unknown fields are rejected | `authValidators.js`, `itemValidators.js`, … |
 | `middleware/` | Reusable checkpoints | `authenticate.js` (who are you?), `authorize.js` (are you allowed?), `validate.js`, `rateLimiters.js`, `upload.js`, `notFound.js`, `errorHandler.js` |
@@ -288,6 +288,7 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 | `NODE_ENV` | `development`, `test` or `production` |
 | `PORT` | Default `4000` |
 | `MONGODB_URI` | Atlas connection string (secret) |
+| `MONGODB_DB_NAME` | Database name inside the cluster. Default `findit` |
 | `JWT_SECRET` | Long random string (secret) |
 | `JWT_EXPIRES_IN` | Default `7d` |
 | `CORS_ORIGINS` | Comma-separated list of allowed browser origins (the dashboard) |

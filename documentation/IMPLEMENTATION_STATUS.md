@@ -1,6 +1,6 @@
 # FINDIT: Implementation Status
 
-**Last updated:** 2026-11-22 (end of Stage 2)
+**Last updated:** 2026-11-22 (Stage 3 built; Atlas check pending)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -12,10 +12,10 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 2: Repository and environment setup |
-| **State** | ✅ Built and verified in the cloud container (Linux, Node 22.23.5) **and on the owner's laptop** (Windows, PowerShell, Node 24.20.0). See section 4 |
-| **Next stage** | Stage 3: Backend foundation and MongoDB connection |
-| **What works today** | The backend starts and answers `GET /api/v1/health`; bad requests get clean JSON errors; bad settings stop the server with a clear message; 20 automated tests pass |
+| **Current stage** | Stage 3: Backend foundation and MongoDB connection |
+| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**. **Not yet verified against MongoDB Atlas or on the owner's laptop**, because the container cannot reach Atlas. The owner's step is [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 3 (`npm run check:db`). Stages 1 and 2 are fully verified |
+| **Next stage** | Stage 4: Authentication and user management (after the Atlas check passes) |
+| **What works today** | The backend connects to MongoDB and answers `GET /api/v1/health` (including `database: connected`); sends security headers; enforces a CORS allow-list; explains database problems in plain English without ever showing the password; 71 automated tests pass (64 by default plus 7 that need a real database) |
 | **Everything else** | Planned only: database, accounts, items, claims, mobile app, dashboard |
 
 ## 2. Stages
@@ -24,7 +24,7 @@ This file is the **single source of truth for what actually exists and has been 
 |---|---|---|---|
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
-| 3 | Backend foundation and MongoDB connection | ⬜ | Decision D-018 (test database) to be settled here |
+| 3 | Backend foundation and MongoDB connection | ⚠️ | Verified against a real local MongoDB in the container. **Atlas check pending on the owner's laptop** |
 | 4 | Authentication and user management | ⬜ | |
 | 5 | Lost and found item reporting | ⬜ | |
 | 6 | Browsing and search | ⬜ | |
@@ -47,18 +47,21 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | 0 complete, **1 partial**: `GET /health` (the `database` field arrives in Stage 3) | The partial one: container and owner's laptop |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **1**: `GET /health` (complete) | Container with a real MongoDB. Against Atlas: pending |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | 0 | 0 |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | 0 complete, **4 partial** (below) | Container and owner's laptop |
-| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 84 | 4 covered by automated tests (1 only partly) | Container and owner's laptop |
-| Automated tests (Jest) | n/a | 20 | 20 pass (container and owner's laptop) |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **2 implemented** (S-15, S-16), **3 partial** (below) | Container (automated tests) |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 88 | 10 covered by automated tests | Container |
+| Automated tests (Jest) | n/a | 71 (64 run by default, 7 need a real database) | `test:db`: 71 of 71 pass (container). Default `npm test`: 64 pass, 7 skipped (container). Owner's laptop: not yet re-run since Stage 2 |
 
-**Partially started security controls** (none is complete yet):
-- **S-15 Security headers:** only the `X-Powered-By` header is removed. Helmet arrives in Stage 3.
+**Implemented and tested in Stage 3:**
+- **S-15 Security headers:** Helmet's standard headers (content-type sniffing protection, framing protection, CSP, HSTS, referrer policy) on every response including errors; framework header removed.
+- **S-16 CORS allow-list:** only the listed websites are approved; `*` is refused in settings; no cookies cross-site; the mobile app, Postman and curl are unaffected.
+
+**Partially started** (none of these is complete):
 - **S-17 Request size limits:** JSON bodies over 100 kB are refused. Upload and pagination limits come later.
-- **S-19 Secrets management:** `.gitignore` and `.env.example` exist and were tested with fake secrets. The required-secret check and push-time secret scan come later.
+- **S-19 Secrets management:** `.gitignore` and `.env.example` (tested with fake secrets); the server refuses to start without the database setting; the connection string cannot appear when the config is printed; error text is redacted. The push-time secret scan comes later.
 - **S-20 Safe error handling:** unexpected errors return a generic 500 with no detail. Validation, permission and conflict errors arrive from Stage 4.
 
 ## 4. Verification log
@@ -104,13 +107,39 @@ Not reported by the owner: Ctrl+C shutdown on Windows, and whether a firewall pr
 - Anything involving MongoDB, Cloudinary or Expo (not used yet).
 - Free-tier limits of external services (accounts not created yet).
 
+### Stage 3 (database, security headers, CORS), 2026-11-22
+Environment: Linux container (Ubuntu 24.04, Node 22.23.5) using the new `findit` environment (allows `fastdl.mongodb.org`, D-024). Installed: mongoose 9.12.3 (driver 7.8.0), helmet 8.3.0, cors 2.8.6 · dev: mongodb-memory-server-core 11.4.0. Test database: a real, throwaway MongoDB 8.0.17.
+
+| Check | Method | Result |
+|---|---|---|
+| Plain `npm test` (as on the owner's laptop) | `npm test` | ✅ 64 pass, **7 skipped** (database tests), 0 fail. Skipping is announced |
+| All tests with a real database | `npm run test:db` | ✅ **71 of 71 pass** |
+| Tests can actually fail | Deliberately broke the code three ways: health always says "connected"; CORS lets every website in; the password is visible when the config is printed | ✅ 4, 3 and 1 tests failed. Files restored byte for byte |
+| Real server + real MongoDB (with login) | Started the real server, asked for health, pressed Ctrl+C | ✅ `database: "connected"`; clean exit code 0 |
+| `check:db` | Against a working database, using an environment variable and again using a real `.env` file | ✅ Both succeeded. `.env` confirmed ignored by Git |
+| Failure explanations | Missing setting; placeholder left in; wrong password (a real database authentication failure); nothing listening | ✅ Each gave a plain-English reason and exit code 1 |
+| No secrets in output | Searched all server and `check:db` output from a real wrong-password failure for the passwords | ✅ 0 occurrences |
+
+**Bugs found by this verification and fixed**
+1. **MongoDB driver under Jest:** every database test failed with *"Missing required sub-document 'driver'"*. Root cause (confirmed in the driver's source): it loads `os` via a dynamic `import()` that Jest cannot run, so its handshake is empty. Plain Node connects fine (checked with 8.0.17 and 8.2.6). Fixed in the test helper only (D-026).
+2. **Misleading shutdown message:** Ctrl+C printed "Database connection lost. Trying to reconnect...". Fixed.
+3. **`[object Object]`** at the end of the unreachable-database explanation. Fixed, with tests.
+
+**Not verified in Stage 3**
+- **MongoDB Atlas:** the container cannot reach it. Needs the owner (Part 3 of the setup guide). This also confirms driver 7.8 against Atlas's actual server version.
+- The owner's laptop has not re-run the tests since Stage 3 (expect `64 passed, 7 skipped`).
+- `npm run test:db` on Windows (optional, about 760 MB one-time download).
+- Fresh download from GitHub after the Stage 3 push: *pending, recorded below once done.*
+
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
 |---|---|---|
-| D-018 | How database-connected tests are run, given the container's network limits | Stage 3 |
+| **Owner action** | Create the Atlas database and run `npm run check:db` ([SETUP_GUIDE.md](SETUP_GUIDE.md) Part 3). This is what fully verifies Stage 3 | Before Stage 4 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
 | Audit | 18 moderate advisories in Jest's dev-only dependency chain | Stage 16 |
+
+*D-018 (test database) was settled in Stage 3.*
 
 ## 6. What exists in the repository
 
@@ -119,14 +148,18 @@ CLAUDE.md                       Standing instructions for the AI assistant (carr
 README.md, .gitignore
 backend/
   package.json, package-lock.json, .env.example, .gitignore, README.md
-  src/config/env.js             Settings loader (fails fast)
+  src/config/env.js             Settings loader: validates, never reads files itself
+  src/config/db.js              MongoDB connection, state, redaction, plain-English errors
   src/controllers/healthController.js
   src/routes/index.js, healthRoutes.js
-  src/middleware/notFound.js, errorHandler.js
-  src/app.js, server.js
-  tests/health.test.js, config.test.js
-  (empty placeholders: src/models, services, validators, utils, scripts)
-documentation/                  All Stage 1 documents, updated for Stage 2
+  src/middleware/cors.js, notFound.js, errorHandler.js
+  src/app.js                    createApp(config): Helmet, CORS, JSON, routes, errors
+  src/server.js                 settings -> database -> web server -> clean shutdown
+  scripts/checkDatabase.js      npm run check:db   (read-only Atlas check)
+  scripts/testWithDatabase.js   npm run test:db    (all tests with a real throwaway MongoDB)
+  tests/                        health, config, security, dbErrors, database, databaseAuth (+ setup/ and helpers/)
+  (empty placeholders: src/models, services, validators, utils)
+documentation/                  All documents, updated for Stage 3
 ```
 
 `mobile-app/` and `admin-dashboard/` do not exist yet. They are created by their own tools in Stages 7 and 12.

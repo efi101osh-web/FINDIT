@@ -42,4 +42,7 @@ This file is read automatically at the start of every session. It carries the pr
 ## Environment notes
 
 - Coding happens in a cloud container. The owner runs the backend and Expo on **their own laptop** and updates it with `git pull`, so every stage must end pushed to GitHub.
-- The container may be unable to reach MongoDB Atlas (blocked by network policy). See `documentation/DECISIONS.md` D-018.
+- The container **cannot reach MongoDB Atlas**. Anything that needs the real Atlas cluster must be verified on the owner's laptop (`npm run check:db`) and is labelled "needs your laptop" until they report success.
+- The container uses the owner's `findit` environment, which allows `fastdl.mongodb.org`, so a real throwaway MongoDB can run here. **Run `npm run test:db` (not just `npm test`) before every commit**: plain `npm test` skips the database tests. See `documentation/DECISIONS.md` D-018 and D-026.
+- Tests that connect must use `tests/helpers/database.js` (it works around a driver problem under Jest).
+- The owner's laptop: Windows, PowerShell, Node 24. Give commands as separate blocks. The Windows copy of the test MongoDB is a 500 to 800 MB download, so do not ask them to run `test:db`.

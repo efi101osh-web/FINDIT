@@ -8,7 +8,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:db": "node scripts/testWithDatabase.js",
+    "check:db": "node scripts/checkDatabase.js"
   },
   "engines": {
     "node": "^22.0.0 || >=24.0.0"
@@ -17,7 +19,10 @@
     "testEnvironment": "node",
     "testMatch": [
       "**/tests/**/*.test.js"
-    ]
+    ],
+    "globalSetup": "<rootDir>/tests/setup/globalSetup.js",
+    "globalTeardown": "<rootDir>/tests/setup/globalTeardown.js",
+    "testTimeout": 20000
   },
   "dependencies": {
     "cors": "^2.8.6",
