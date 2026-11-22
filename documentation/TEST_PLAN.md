@@ -1,0 +1,171 @@
+# FINDIT: Test Plan
+
+> **Status:** Stage 1 plan. **No test has been written or run yet.** Every status below is `Not run`. Results are recorded here as tests are executed, with the date and what was actually observed. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+
+## 1. Strategy
+
+| Level | What | Tool | When |
+|---|---|---|---|
+| Backend automated | API behaviour, permissions, rules | Jest + Supertest | Each backend stage, re-run before every commit |
+| Backend manual | Quick checks and demos | Postman collection | During development |
+| Mobile manual | Screens, forms, navigation, real phone | Expo Go on an Android phone | After each mobile stage |
+| Dashboard manual | Pages, tables, actions | Browser | After each dashboard stage |
+| End-to-end | The full user journey across all three parts | Manual script (section 6) | Stage 17, and before the demo |
+| Security | Abuse cases | Manual + automated | Stage 16 |
+
+**Principles:** test the *rules* (permissions, privacy, state changes), not just the happy path · every bug found gets a regression test where practical · record real output, not impressions.
+
+**Test data:** fake only. Seed accounts: one admin, one recovery officer, several users (credentials generated from `.env`, never committed).
+
+**Database for tests:** see [DECISIONS.md](DECISIONS.md) D-018 (Open).
+
+## 2. Backend test cases
+
+Status for all: `Not run`.
+
+### System and invalid requests
+| ID | Case | Expected |
+|---|---|---|
+| T-HLT-01 | `GET /health` | 200, `database: "connected"` |
+| T-INV-01 | Malformed ID in a URL | 400 `VALIDATION_ERROR` |
+| T-INV-02 | Unknown route | 404 in the standard error shape |
+| T-INV-03 | Invalid JSON body | 400 in the standard error shape |
+| T-SEC-01 | Response headers | Security headers present (Helmet) |
+| T-SEC-02 | CORS from a non-allowed origin | Browser request blocked |
+| T-SEC-03 | 11 rapid login attempts | 429 `RATE_LIMITED` |
+| T-SEC-04 | Any 500 error | No stack trace or internals in the response |
+
+### Authentication and users
+| ID | Case | Expected |
+|---|---|---|
+| T-AUTH-01 | Register with valid data | 201, token + user, role `user`, **no** `passwordHash` |
+| T-AUTH-02 | Register with the same email in different letter case | 409 `CONFLICT` |
+| T-AUTH-03 | Register with a weak or over-72-character password | 400 |
+| T-AUTH-04 | Register with `"role":"admin"` in the body | 400 (field not accepted) |
+| T-AUTH-05 | Login with correct credentials | 200 + token |
+| T-AUTH-06 | Login with wrong password vs unknown email | Same 401 response for both |
+| T-AUTH-07 | Login to a suspended account | 403 `ACCOUNT_SUSPENDED` |
+| T-AUTH-08 | Protected route with no / malformed / expired token | 401 `UNAUTHENTICATED` |
+| T-AUTH-09 | Suspended user with a previously valid token | 403 on the next request |
+| T-AUTH-10 | Database holds a bcrypt hash, not the password | Verified by inspection |
+| T-USR-01 | Update full name, phone, contact preference | 200, changes saved |
+| T-USR-02 | Try to change email / role / status via `PATCH /users/me` | 400 |
+| T-USR-03 | Change password with correct current password | 200, new password works, old does not |
+| T-USR-04 | Change password with wrong current password | 400 on `currentPassword` |
+
+### Items, browsing and search
+| ID | Case | Expected |
+|---|---|---|
+| T-ITM-01 | Create a LOST report | 201, status `OPEN`, owner view |
+| T-ITM-02 | Create a FOUND report with private fields | 201, private fields saved |
+| T-ITM-03 | Invalid category / colour / location | 400 |
+| T-ITM-04 | Future event date | 400 |
+| T-ITM-05 | FOUND-only field on a LOST report | 400 |
+| T-ITM-06 | Another user fetches the item | Private fields and reporter **absent** |
+| T-ITM-07 | Owner fetches own item | Private fields present |
+| T-ITM-08 | Non-owner `PATCH /items/:id` | 403 |
+| T-ITM-09 | Owner edits allowed fields | 200 |
+| T-ITM-10 | Send `status`, `reporterId` or `reportType` in a PATCH | 400 |
+| T-ITM-11 | Owner closes own report | 200, status `CLOSED` |
+| T-ITM-12 | Another user fetches a `CLOSED` report | 404 |
+| T-ITM-13 | Image URL from a foreign host | 400 |
+| T-SRC-01 | `q=head` finds "headphones" | Partial word matches |
+| T-SRC-02 | Combine type, category, location, date range | Only matching reports returned |
+| T-SRC-03 | Pagination | `meta` correct; last page correct |
+| T-SRC-04 | `limit=500` | 400 (or clamped to 50, as finally decided and documented) |
+| T-SRC-05 | `q=(.*)+$` and other regex characters | Treated as plain text; no error, no slowdown |
+| T-SRC-06 | `?category[$ne]=x` operator injection | 400, query not run |
+| T-SRC-07 | Each sort option | Correct order |
+| T-SRC-08 | Empty result | 200, empty array, `total: 0` |
+
+### Matching
+| ID | Case | Expected |
+|---|---|---|
+| T-MAT-01 | Lost + found, same category/colour/location/date | Score at or above notify threshold; reasons listed |
+| T-MAT-02 | Different category | Not a candidate |
+| T-MAT-03 | Same reporter's own lost and found | Not matched |
+| T-MAT-04 | Reasons and score | Derived from public fields only (changing `privateDetails` does not change the score) |
+| T-MAT-05 | Strong match | Notification created once (no duplicate on re-run) |
+| T-MAT-06 | Non-owner calls `GET /items/:id/matches` | 403 |
+
+### Claims
+| ID | Case | Expected |
+|---|---|---|
+| T-CLM-01 | Valid claim | 201, claim `PENDING`, item `UNDER_VERIFICATION` |
+| T-CLM-02 | Claim own found item | 403 |
+| T-CLM-03 | Admin / officer submits a claim | 403 |
+| T-CLM-04 | Second active claim on the same item by same user | 409 |
+| T-CLM-05 | Item and list responses | `privateEvidence` **never** present |
+| T-CLM-06 | Another user fetches my claim | 404 |
+| T-CLM-07 | `respond` when not `NEEDS_MORE_INFORMATION` | 409 |
+| T-CLM-08 | Withdraw, then item returns to `OPEN` if no other active claim | Correct statuses |
+| T-CLM-09 | Approve one of two claims | Item `APPROVED_FOR_RETURN`; the other claim auto-`REJECTED` with notification |
+| T-CLM-10 | Reject or request info without a note | 400 |
+| T-CLM-11 | Illegal transition (e.g. approve a `PENDING` claim) | 409 `INVALID_STATE_TRANSITION` |
+| T-CLM-12 | Regular user calls the review endpoint | 403 |
+
+### Recovery
+| ID | Case | Expected |
+|---|---|---|
+| T-REC-01 | Create a record for an approved claim | 201 |
+| T-REC-02 | Create for a claim that is not approved | 409 |
+| T-REC-03 | Second record for the same claim | 409 |
+| T-REC-04 | Officer lists records | Only records assigned to them |
+| T-REC-05 | Officer calls claim-evidence endpoints | 403 |
+| T-REC-06 | Complete a record | Item `RETURNED`; linked lost report `RETURNED`; notifications sent |
+| T-REC-07 | Cancel a record, then admin reopens the item | Statuses follow the flow |
+| T-REC-08 | Officer edits a record that is not theirs | 403 |
+
+### Notifications, uploads, administration
+| ID | Case | Expected |
+|---|---|---|
+| T-NOT-01 | Each event type | One notification to the right recipient |
+| T-NOT-02 | List notifications | Only my own |
+| T-NOT-03 | Mark someone else's notification read | 404 |
+| T-NOT-04 | Mark one / mark all / unread count | Correct |
+| T-IMG-01 | Upload a valid JPEG | 201, `url` + `publicId` (**needs Cloudinary account**) |
+| T-IMG-02 | File over 5 MB | 413 |
+| T-IMG-03 | A non-image renamed to `.jpg` | 415 |
+| T-IMG-04 | Upload without a token | 401 |
+| T-ADM-01 | Every `/admin/*` route as a regular user | 403 |
+| T-ADM-02 | Overview figures | Equal to counts taken directly from the database |
+| T-ADM-03 | Admin changes own role or status | 403 |
+| T-ADM-04 | Demote / suspend the last active admin | 403 |
+| T-ADM-05 | Claim review, status override, role change | Audit record written |
+| T-ADM-06 | Admin opens a claim's evidence | `EVIDENCE_VIEWED` audit record |
+| T-ADM-07 | Analytics ranges | Figures match the data; invalid range → 400 |
+
+## 3. Mobile test checklist (Expo Go, physical Android phone)
+
+All `Not run`: Opens in Expo Go without errors · Welcome → Login → Register flow · form validation messages · wrong password message · token survives app restart · logout returns to Welcome · tabs and stack navigation, back button · Home shows recent reports · Lost / Found lists scroll and paginate · search and filters · empty state · loading state · offline / server-off error state with retry · item details hide private data · report lost and report found (with and without photo) · image picker permission denied path · large photo rejected with a clear message · submit claim · my reports · my claims and status badges · notifications list, unread badge, mark read · profile and edit profile · every button reachable at 44 pt · text readable at larger system font size.
+
+## 4. Dashboard test checklist (browser)
+
+All `Not run`: Login rejects a regular user · login with admin · logout · sidebar navigation · overview cards equal the database · reports table: search, filter, paginate, sort · open a report's detail · claims queue and review actions (start, request info, approve, reject with confirmation) · users: search, suspend and reactivate, role change, blocked self-change · recovery records: create, schedule, complete · analytics charts render with real data and with no data · audit records page · refresh keeps the session within the tab · API server stopped shows a readable error · page works at laptop and tablet widths.
+
+## 5. Security tests (Stage 16)
+
+Manually attempt each: user calls an admin route · read another user's claim by ID · edit another user's report · register with a `role` · use an expired token · use a suspended user's token · 12 rapid logins · 6 MB upload · fake-extension upload · `$` operators in query strings · very long strings · script tags in text fields (must display as plain text everywhere) · confirm no secret appears in the repository (`git log -p` scan) · `npm audit` reviewed.
+
+## 6. End-to-end script (the demo scenario)
+
+Diagram: [diagrams/end-to-end-flow.md](diagrams/end-to-end-flow.md). Run it on a **fresh database with seed data**.
+
+1. Register user **Owner**; log in on the phone.
+2. Owner reports a **lost** item (with photo). *Expect:* appears under My reports, status `OPEN`.
+3. Register user **Finder** on another device or session; report a **found** item matching it. *Expect:* status `OPEN`.
+4. *Expect:* Owner receives a **potential match** notification; the match screen lists the found item with a score and reasons and the "not proof" notice; both reports show `POTENTIAL_MATCH`.
+5. Check privacy: as Owner, open the found item. *Expect:* no private details, no reporter identity.
+6. Owner submits a **claim** with private evidence. *Expect:* claim `PENDING`; found item `UNDER_VERIFICATION`; admin and finder notified.
+7. Admin (dashboard) opens the claim, starts review, **requests more information**. *Expect:* Owner notified; claim `NEEDS_MORE_INFORMATION`.
+8. Owner responds. *Expect:* claim `UNDER_REVIEW`.
+9. Admin **approves**. *Expect:* claim `APPROVED`; item `APPROVED_FOR_RETURN`; Owner notified; audit records exist for the review and for viewing the evidence.
+10. Admin **creates a recovery record**, assigns the officer and an office.
+11. Officer logs in and sees **only** that record; marks it **completed**. *Expect:* found item and lost report `RETURNED`; Owner and Finder notified.
+12. Dashboard overview and analytics reflect the returned item. *Final status:* all records consistent.
+
+## 7. Defect log
+
+| ID | Date | Found in | Description | Status |
+|---|---|---|---|---|
+| *(none yet)* | | | | |
