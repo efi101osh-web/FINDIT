@@ -89,7 +89,7 @@ cd backend
 npm install
 ```
 
-**Success looks like:** a line such as `added 363 packages` (the number may differ slightly) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
+**Success looks like:** a line such as `added 364 packages` (a few more or fewer is fine) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
 
 ### 2.4 (Optional) create your settings file
 

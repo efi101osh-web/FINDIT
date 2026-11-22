@@ -178,4 +178,5 @@ Real results only, with the date and where they were run.
 |---|---|---|---|---|
 | 2026-11-22 | Cloud container (Linux, Node 22.23.5) | T-HLT-01 (partial), T-INV-02, T-INV-03, T-SEC-04, plus foundation tests (framework header hidden, 413 on oversized body, 404 does not echo the URL, settings loader) | ✅ 20 of 20 Jest tests pass | T-HLT-01 checks the health response but not `database: "connected"` (arrives in Stage 3). Tests were shown to fail when the code was deliberately broken |
 | 2026-11-22 | Cloud container, real server + `curl` | Manual check of health, 404, bad JSON, shutdown, bad settings, port clash | ✅ As expected | See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) section 4 |
+| 2026-11-22 | Fresh clone from GitHub (Linux container) | Same 20 tests, plus manual server check | ✅ 20 of 20 pass after a clean `npm install` | Confirms the pushed repository is complete and self-contained |
 | *(pending)* | **Owner's laptop** | Setup guide Part 2, plus `npm test` | Needs laptop | The owner's first run |

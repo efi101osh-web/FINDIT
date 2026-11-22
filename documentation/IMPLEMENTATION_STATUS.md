@@ -81,6 +81,7 @@ Installed: express 5.3.0, dotenv 18.0.10 · dev: jest 30.5.2, supertest 7.3.2.
 | Port already in use | Started a second server on the same port | ✅ Plain-words message, exit code 1 |
 | Auto-restart | `npm run dev`, then changed a file | ✅ Restarted and kept answering |
 | `.gitignore` protects secrets | Created fake `.env`, `.env.local`, `.pem`, `.zip` and a nested `node_modules`; asked Git | ✅ All ignored. `.env.example` explicitly allowed |
+| **Fresh download from GitHub** | Cloned the pushed branch into an empty folder, then ran `npm install`, `npm test`, `npm start` and called the server, with no files carried over from the working copy | ✅ Installed 364 packages; 20 of 20 tests pass; health returned 200 and an unknown URL returned the standard 404; all documentation checks pass on the downloaded copy. Both commits show the owner as author |
 | Dependency audit | `npm audit` | ⚠️ **Production dependencies: 0 vulnerabilities. Dev tooling: 18 moderate**, all in Jest's own test tooling (`minimatch`/`glob`), which never ships. npm's suggested fix downgrades Jest to an older version, so it was **not** applied. Revisit at Stage 16 |
 
 **Not verified in Stage 2**
