@@ -13,7 +13,7 @@ This file is the **single source of truth for what actually exists and has been 
 | | |
 |---|---|
 | **Current stage** | Stage 2: Repository and environment setup |
-| **State** | ⚠️ Built and verified in the cloud container (Linux, Node 22.23.5). **Not yet run on the owner's laptop.** That run is the owner's first test (see [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 2) |
+| **State** | ✅ Built and verified in the cloud container (Linux, Node 22.23.5) **and on the owner's laptop** (Windows, PowerShell, Node 24.20.0). See section 4 |
 | **Next stage** | Stage 3: Backend foundation and MongoDB connection |
 | **What works today** | The backend starts and answers `GET /api/v1/health`; bad requests get clean JSON errors; bad settings stop the server with a clear message; 20 automated tests pass |
 | **Everything else** | Planned only: database, accounts, items, claims, mobile app, dashboard |
@@ -23,7 +23,7 @@ This file is the **single source of truth for what actually exists and has been 
 | # | Stage | Status | Notes |
 |---|---|---|---|
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
-| 2 | Repository and environment setup | ⚠️ | Verified in the container. Owner's laptop run pending (see section 1) |
+| 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
 | 3 | Backend foundation and MongoDB connection | ⬜ | Decision D-018 (test database) to be settled here |
 | 4 | Authentication and user management | ⬜ | |
 | 5 | Lost and found item reporting | ⬜ | |
@@ -47,13 +47,13 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | 0 complete, **1 partial**: `GET /health` (the `database` field arrives in Stage 3) | The partial one, in the container only |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | 0 complete, **1 partial**: `GET /health` (the `database` field arrives in Stage 3) | The partial one: container and owner's laptop |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | 0 | 0 |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | 0 complete, **4 partial** (below) | In the container only |
-| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 84 | 4 covered by automated tests (1 only partly) | Container only |
-| Automated tests (Jest) | n/a | 20 | 20 pass (container) |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | 0 complete, **4 partial** (below) | Container and owner's laptop |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 84 | 4 covered by automated tests (1 only partly) | Container and owner's laptop |
+| Automated tests (Jest) | n/a | 20 | 20 pass (container and owner's laptop) |
 
 **Partially started security controls** (none is complete yet):
 - **S-15 Security headers:** only the `X-Powered-By` header is removed. Helmet arrives in Stage 3.
@@ -84,8 +84,22 @@ Installed: express 5.3.0, dotenv 18.0.10 · dev: jest 30.5.2, supertest 7.3.2.
 | **Fresh download from GitHub** | Cloned the pushed branch into an empty folder, then ran `npm install`, `npm test`, `npm start` and called the server, with no files carried over from the working copy | ✅ Installed 364 packages; 20 of 20 tests pass; health returned 200 and an unknown URL returned the standard 404; all documentation checks pass on the downloaded copy. Both commits show the owner as author |
 | Dependency audit | `npm audit` | ⚠️ **Production dependencies: 0 vulnerabilities. Dev tooling: 18 moderate**, all in Jest's own test tooling (`minimatch`/`glob`), which never ships. npm's suggested fix downgrades Jest to an older version, so it was **not** applied. Revisit at Stage 16 |
 
+### Stage 2 on the owner's laptop, 2026-11-22
+Environment (reported by the owner): Windows, PowerShell, Node v24.20.0.
+
+| Check | Result |
+|---|---|
+| Download from GitHub (`git clone`) | ✅ On the right branch and up to date. `git log` showed the expected three commits (`156dc46`, `4ebe10b`, `4b58413`) |
+| `npm install` | ✅ Added 362 packages (audited 363). Same harmless `glob` deprecation notice and same 18 dev-only moderate advisories as in the container. The count differs from the container's 364 by 2, most likely platform-specific optional packages |
+| `npm run dev` | ✅ Output matched [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 2 exactly |
+| Browser: `/api/v1/health` | ✅ `{"success":true,"data":{"status":"ok",...}}` |
+| Browser: `/api/v1/nope` | ✅ `{"success":false,"error":{"code":"NOT_FOUND",...}}` |
+| `npm test` | ✅ 2 suites, **20 of 20 tests pass** (7.5 s) |
+
+Not reported by the owner: Ctrl+C shutdown on Windows, and whether a firewall prompt appeared.
+
 **Not verified in Stage 2**
-- Running on the owner's laptop, on Windows or macOS, or with Node 24. *(Owner's first test.)*
+- macOS, or Windows with a Node version other than 24.20.0. (Node 23 is not supported by Jest 30.)
 - Access from a phone over Wi-Fi. *(Stage 8. Only "accepts network connections" was checked.)*
 - Anything involving MongoDB, Cloudinary or Expo (not used yet).
 - Free-tier limits of external services (accounts not created yet).

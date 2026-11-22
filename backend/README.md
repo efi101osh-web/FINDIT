@@ -4,7 +4,7 @@ The REST API for FINDIT (Node.js + Express). Design: [../documentation/ARCHITECT
 
 ## Requirements
 
-Node.js 22 (LTS) and npm. Check with `node --version`.
+Node.js 22 or 24 (LTS) and npm. Check with `node --version`.
 
 ## Setup and run
 

@@ -118,7 +118,7 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Status:** Accepted (Stage 2)
 **Decision:** Use the current Express (5.3.0). It forwards errors from `async` functions to the error handler automatically (proved by a test), so the planned `utils/asyncHandler.js` wrapper is not needed and has been removed from the plan. Also dotenv 18, Jest 30, Supertest 7.
 **Why:** Less code and one fewer thing for a beginner to remember to wrap every route in. All of these support Node 22.
-**Consequence:** Jest 30 supports Node 22 and 24 but **not** Node 23, so the project asks for Node `^22 || >=24`.
+**Consequence:** Jest 30 supports Node 22 and 24 but **not** Node 23, so the project asks for Node `^22 || >=24`. Verified on Node 22.23.5 (Linux) and Node 24.20.0 (Windows).
 
 ## D-022: `node --watch` instead of nodemon
 **Status:** Accepted (Stage 2)

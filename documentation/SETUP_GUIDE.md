@@ -2,7 +2,7 @@
 
 > **Status: PARTIAL.** Part 1 (getting your laptop ready) and Part 2 (running the backend) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Part 2 was tested in a Linux cloud container, not yet on your laptop. Your run is the real test, so please tell me exactly what you see.**
+> **Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0).** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -14,13 +14,13 @@ You will run FINDIT on **your own laptop**. The coding assistant writes code in 
 
 | Tool | What it is | Get it from | Check it worked |
 |---|---|---|---|
-| **Node.js 22 (LTS)** | Runs the backend and the build tools | nodejs.org | `node --version` prints `v22.x.x` |
+| **Node.js 22 (LTS)** | Runs the backend and the build tools | nodejs.org | `node --version` prints `v22.x.x` (or `v24.x.x`) |
 | **npm** | Installs libraries (comes with Node.js) | included | `npm --version` prints a number such as `10.x.x` |
 | **Git** | Downloads and saves versions of the code | git-scm.com | `git --version` prints `git version 2.x.x` |
 | **Visual Studio Code** | Code editor | code.visualstudio.com | It opens |
 | **Postman** | Lets you send test requests to the API | postman.com | It opens |
 
-**About the Node.js version:** the project is developed and tested with **Node 22**. A newer version may work, but it has not been tested, so Node 22 is recommended. If you install a different version, tell the assistant.
+**About the Node.js version:** the project is developed on **Node 22** and has also been run successfully on **Node 24.20.0** (Windows). Either is fine. Odd-numbered versions such as Node 23 are not supported by the test tool (Jest 30).
 
 Open a terminal (VS Code: **Terminal → New Terminal**) and run each check command. Send the assistant the output if anything looks different.
 
@@ -89,7 +89,7 @@ cd backend
 npm install
 ```
 
-**Success looks like:** a line such as `added 364 packages` (a few more or fewer is fine) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
+**Success looks like:** a line such as `added 362 packages` (anything from about 362 to 364 is normal; it varies slightly by operating system) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
 
 ### 2.4 (Optional) create your settings file
 
@@ -132,7 +132,7 @@ Open <http://localhost:4000/api/v1/health>. **Success looks like:**
 
 ### 2.7 Run the automated tests
 
-Stop the server with **Ctrl+C**, or open a second terminal (**Terminal → New Terminal**, then `cd backend`), and run:
+Stop the server with **Ctrl+C** (on Windows, type `Y` if it asks `Terminate batch job (Y/N)?`), or open a second terminal (**Terminal → New Terminal**, then `cd backend`), and run:
 
 ```bash
 npm test
@@ -152,7 +152,8 @@ Tests:       20 passed, 20 total
 | `'npm' is not recognized` / `command not found` | Node.js is not installed, or the terminal was opened before installing it. Install Node 22 and **close and reopen VS Code** |
 | `Port 4000 is already in use` | Another program is using that port. Close it, or add `PORT=4001` to `backend/.env` |
 | `Settings problem: Invalid PORT ...` | Your `.env` has a bad value. Fix or delete that line |
-| `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x** |
+| `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x or 24.x** |
+| `running scripts is disabled on this system` (Windows PowerShell) | PowerShell's safety setting is blocking npm's script. Type `npm.cmd` instead of `npm` (same program), or use Command Prompt |
 | Browser says "This site can't be reached" | The server is not running. Look at the terminal for the error |
 | Anything else | Copy the **whole** terminal text and send it to me |
 

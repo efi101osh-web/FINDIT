@@ -36,7 +36,7 @@ FINDIT/
 
 ## Run the backend
 
-You need **Node.js 22** and **Git** (see [documentation/SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)).
+You need **Node.js 22 or 24** and **Git** (see [documentation/SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)).
 
 ```bash
 cd backend
