@@ -1,6 +1,6 @@
 # FINDIT: API Contract
 
-> **Status: PLANNED. Nothing in this file is implemented yet.** This is the agreed design for the REST API. Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
+> **Status: PLANNED. Only `GET /health` exists so far, and only partly (it has no `database` field until Stage 3). Everything else below is design, not implemented.** Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
 
 The mobile app and the admin dashboard use **the same API** with the same rules.
 

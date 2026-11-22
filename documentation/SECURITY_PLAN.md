@@ -1,6 +1,6 @@
 # FINDIT: Security Plan
 
-> **Status: PLAN. Nothing below is implemented yet.** Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
+> **Status: PLAN. No control is complete yet. Four are partly started (marked `Partial`).** Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
 
 ## 1. What we are protecting
 
@@ -33,12 +33,12 @@
 | S-12 | Mass-assignment protection | Client sets `status`, `reporterId`, etc. | Update schemas whitelist editable fields. Status only changes via `statusRules.js` | 5 | Planned |
 | S-13 | Status state machine | Illegal workflow jumps (e.g. skipping verification) | Single file of allowed transitions; others return 409 | 5, 11 | Planned |
 | S-14 | Rate limiting | Password guessing, spam, floods | Limits in [API_CONTRACT.md](API_CONTRACT.md#16-initial-rate-limits-tunable) | 4 on | Planned |
-| S-15 | Security headers | Common browser attacks | Helmet | 3 | Planned |
+| S-15 | Security headers | Common browser attacks | Helmet | 3 | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
 | S-16 | CORS allow-list | Other websites calling the API from a browser | Only origins listed in `CORS_ORIGINS` | 3 | Planned |
-| S-17 | Request size limits | Memory exhaustion | JSON body limit; upload 5 MB; `limit` max 50 | 3, 9 | Planned |
+| S-17 | Request size limits | Memory exhaustion | JSON body limit; upload 5 MB; `limit` max 50 | 3, 9 | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
 | S-18 | Image validation | Malicious or oversized uploads | Size cap, **magic-byte** type check, upload through backend, only our Cloudinary URLs accepted | 9 | Planned |
-| S-19 | Secrets management | Leaked keys | `.env` only, in `.gitignore`. `.env.example` has fake values. App fails to start if a required secret is missing. Secret scan before each push | 2 on | Planned |
-| S-20 | Safe error handling | Information leaks | One error handler. Clients get a code and message, never a stack trace or query | 3 | Planned |
+| S-19 | Secrets management | Leaked keys | `.env` only, in `.gitignore`. `.env.example` has fake values. App fails to start if a required secret is missing. Secret scan before each push | 2 on | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
+| S-20 | Safe error handling | Information leaks | One error handler. Clients get a code and message, never a stack trace or query | 3 | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
 | S-21 | Audit records | Unaccountable staff actions | Append-only log of admin actions, including each viewing of private evidence | 12–16 | Planned |
 | S-22 | Conflict-of-interest rule | Staff approving their own claims | Staff accounts cannot submit claims | 11 | Planned |
 | S-23 | Account suspension | Abusive users | `accountStatus`, checked on login and on every request | 4, 12 | Planned |

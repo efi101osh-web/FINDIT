@@ -1,0 +1,34 @@
+# ============================================================
+# FINDIT: files that must NEVER be committed to Git
+# ============================================================
+
+# Dependencies (re-created by `npm install`; enormous and not our code)
+node_modules/
+
+# Secrets: passwords, tokens and keys live in .env files that stay on your machine.
+# The .env.example files (with harmless fake values) ARE committed.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Build output and generated files
+dist/
+build/
+coverage/
+web-build/
+.expo/
+.expo-shared/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Operating system and editor clutter
+.DS_Store
+Thumbs.db
+.idea/
+
+# Archives (for example the original frontend zip): never commit these
+*.zip

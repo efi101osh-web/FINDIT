@@ -1,6 +1,6 @@
 # FINDIT: Test Plan
 
-> **Status:** Stage 1 plan. **No test has been written or run yet.** Every status below is `Not run`. Results are recorded here as tests are executed, with the date and what was actually observed. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+> **Status:** The plan is written. Automated tests began in Stage 2 (20 Jest tests, covering 4 of the 84 planned backend cases, one only partly). Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
 
 ## 1. Strategy
 
@@ -169,3 +169,13 @@ Diagram: [diagrams/end-to-end-flow.md](diagrams/end-to-end-flow.md). Run it on a
 | ID | Date | Found in | Description | Status |
 |---|---|---|---|---|
 | *(none yet)* | | | | |
+
+## 8. Results log
+
+Real results only, with the date and where they were run.
+
+| Date | Where | Test IDs | Result | Notes |
+|---|---|---|---|---|
+| 2026-11-22 | Cloud container (Linux, Node 22.23.5) | T-HLT-01 (partial), T-INV-02, T-INV-03, T-SEC-04, plus foundation tests (framework header hidden, 413 on oversized body, 404 does not echo the URL, settings loader) | ✅ 20 of 20 Jest tests pass | T-HLT-01 checks the health response but not `database: "connected"` (arrives in Stage 3). Tests were shown to fail when the code was deliberately broken |
+| 2026-11-22 | Cloud container, real server + `curl` | Manual check of health, 404, bad JSON, shutdown, bad settings, port clash | ✅ As expected | See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) section 4 |
+| *(pending)* | **Owner's laptop** | Setup guide Part 2, plus `npm test` | Needs laptop | The owner's first run |

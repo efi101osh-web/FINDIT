@@ -1,6 +1,6 @@
 # FINDIT: Implementation Status
 
-**Last updated:** 2026-11-22 (end of Stage 1)
+**Last updated:** 2026-11-22 (end of Stage 2)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -12,17 +12,18 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 1: Project blueprint and requirements |
-| **State** | ✅ Documents written and mechanically checked (see section 4). **Awaiting your review** |
-| **Next stage** | Stage 2: Repository and environment setup |
-| **Working code in the repository** | None yet. Stage 1 produces documents only |
+| **Current stage** | Stage 2: Repository and environment setup |
+| **State** | ⚠️ Built and verified in the cloud container (Linux, Node 22.23.5). **Not yet run on the owner's laptop.** That run is the owner's first test (see [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 2) |
+| **Next stage** | Stage 3: Backend foundation and MongoDB connection |
+| **What works today** | The backend starts and answers `GET /api/v1/health`; bad requests get clean JSON errors; bad settings stop the server with a clear message; 20 automated tests pass |
+| **Everything else** | Planned only: database, accounts, items, claims, mobile app, dashboard |
 
 ## 2. Stages
 
 | # | Stage | Status | Notes |
 |---|---|---|---|
-| 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete. Awaiting leader review |
-| 2 | Repository and environment setup | ⬜ | Root README, `.gitignore`, folder skeleton, backend project initialised, health route |
+| 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
+| 2 | Repository and environment setup | ⚠️ | Verified in the container. Owner's laptop run pending (see section 1) |
 | 3 | Backend foundation and MongoDB connection | ⬜ | Decision D-018 (test database) to be settled here |
 | 4 | Authentication and user management | ⬜ | |
 | 5 | Lost and found item reporting | ⬜ | |
@@ -36,7 +37,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 13 | Recovery workflow | ⬜ | |
 | 14 | Notifications | ⬜ | |
 | 15 | Analytics | ⬜ | |
-| 16 | Security review | ⬜ | |
+| 16 | Security review | ⬜ | Includes the dev-tooling audit findings in section 5 |
 | 17 | Integration and end-to-end testing | ⬜ | |
 | 18 | Bug fixes and UI refinement | ⬜ | |
 | 19 | Documentation | ⬜ | |
@@ -46,47 +47,71 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | 0 | 0 |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | 0 complete, **1 partial**: `GET /health` (the `database` field arrives in Stage 3) | The partial one, in the container only |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | 0 | 0 |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | 0 | 0 |
-| Test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 84 backend test cases plus manual checklists | 0 written | 0 run |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | 0 complete, **4 partial** (below) | In the container only |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 84 | 4 covered by automated tests (1 only partly) | Container only |
+| Automated tests (Jest) | n/a | 20 | 20 pass (container) |
 
-## 4. Stage 1 verification log
+**Partially started security controls** (none is complete yet):
+- **S-15 Security headers:** only the `X-Powered-By` header is removed. Helmet arrives in Stage 3.
+- **S-17 Request size limits:** JSON bodies over 100 kB are refused. Upload and pagination limits come later.
+- **S-19 Secrets management:** `.gitignore` and `.env.example` exist and were tested with fake secrets. The required-secret check and push-time secret scan come later.
+- **S-20 Safe error handling:** unexpected errors return a generic 500 with no detail. Validation, permission and conflict errors arrive from Stage 4.
 
-What was checked, how, and the result. Checks were run by scripts kept outside the repository.
+## 4. Verification log
+
+### Stage 1 (documents)
+Mermaid diagrams (5 of 5 render, `@mermaid-js/mermaid-cli` 11), internal links and anchors, JSON examples, endpoint index vs. detail sections (37 = 37), decision references, secret/placeholder scan, and WCAG contrast calculations. All passed. Contrast findings changed the design (see [ARCHITECTURE.md](ARCHITECTURE.md#12-design-tokens)).
+
+### Stage 2 (backend foundation), 2026-11-22
+Environment: Linux container, Node 22.23.5, npm 10.9.9, Git 2.43.0.
+Installed: express 5.3.0, dotenv 18.0.10 · dev: jest 30.5.2, supertest 7.3.2.
 
 | Check | Method | Result |
 |---|---|---|
-| Mermaid diagrams are valid | Each of the 5 diagrams rendered to SVG with `@mermaid-js/mermaid-cli` 11 (headless Chromium) | ✅ 5 of 5 rendered |
-| Internal links and heading anchors resolve | Script resolved every relative link and `#anchor` in all documents using GitHub's heading-slug rules | ✅ Passed |
-| JSON examples are valid JSON | Script parsed every `json` code block in the documents | ✅ All parsed |
-| API index matches detailed sections | Script compared the endpoint index to the endpoint headings | ✅ 37 = 37, no duplicates |
-| Decision references exist | Script checked every `D-0xx` mention against `DECISIONS.md` | ✅ All defined |
-| No secrets or placeholders in the documents | Script searched for database connection strings, private keys, API-key patterns and unfinished-work markers | ✅ None found |
-| Brand colour accessibility | WCAG 2.x contrast ratio calculated for every colour pair used | ✅ Computed. Failures found and fixed in the design (see [ARCHITECTURE.md](ARCHITECTURE.md#12-design-tokens)) |
+| Automated tests | `npm test` | ✅ 20 of 20 pass (2 suites) |
+| Tests can actually fail | Deliberately made the 500 handler leak the error message, then deliberately stopped hiding the framework header, then restored both | ✅ 2 tests failed, then 1 failed. Files restored byte-for-byte |
+| Real server answers | Started with `npm start`, called with `curl` | ✅ health 200 in the standard format; unknown URL 404 in the standard format; malformed JSON 400 in the standard format; no `X-Powered-By` header |
+| Reachable from the network | `curl` to the machine's network address, not `localhost` | ✅ HTTP 200. The server accepts connections from other devices, which a phone will need |
+| Clean shutdown | SIGTERM, and SIGINT (Ctrl+C) sent to the server process | ✅ Logs "Shutting down", exit code 0. Stopped in 5 ms with a browser-style keep-alive connection open |
+| Bad settings | `PORT=abc`, `NODE_ENV=staging` | ✅ Plain-words message, exit code 1 |
+| Port already in use | Started a second server on the same port | ✅ Plain-words message, exit code 1 |
+| Auto-restart | `npm run dev`, then changed a file | ✅ Restarted and kept answering |
+| `.gitignore` protects secrets | Created fake `.env`, `.env.local`, `.pem`, `.zip` and a nested `node_modules`; asked Git | ✅ All ignored. `.env.example` explicitly allowed |
+| Dependency audit | `npm audit` | ⚠️ **Production dependencies: 0 vulnerabilities. Dev tooling: 18 moderate**, all in Jest's own test tooling (`minimatch`/`glob`), which never ships. npm's suggested fix downgrades Jest to an older version, so it was **not** applied. Revisit at Stage 16 |
 
-**Findings that changed the design**
-- Brand green, red and muted grey fail the 4.5:1 text standard on some tinted backgrounds, and the brand amber fails as text on white. Darker text tokens were added and amber is restricted to fills.
-- The coding environment cannot reach MongoDB Atlas or the MongoDB binary download host (blocked by network policy), so database-connected tests may need to run on your laptop (D-018).
+**Not verified in Stage 2**
+- Running on the owner's laptop, on Windows or macOS, or with Node 24. *(Owner's first test.)*
+- Access from a phone over Wi-Fi. *(Stage 8. Only "accepts network connections" was checked.)*
+- Anything involving MongoDB, Cloudinary or Expo (not used yet).
+- Free-tier limits of external services (accounts not created yet).
 
-**Environment observed:** Node 22.23.5, npm 10.9.9, Git 2.43.0; the npm registry is reachable.
+## 5. Known issues and open decisions
 
-**What was NOT verified in Stage 1**
-- Nothing about running software, because no software exists yet.
-- The current free-tier limits of MongoDB Atlas, Cloudinary and hosting services (accounts not created; checked at sign-up).
-- That the planned libraries install and work together. This is verified when each is installed, stage by stage.
-- Compatibility with Node versions other than 22.
-- Which Expo SDK your phone's Expo Go supports (D-019).
-
-## 5. Open decisions
-
-| ID | Question | Decide at |
+| ID | Item | Decide / fix at |
 |---|---|---|
-| D-018 | How database-connected tests are run, given the environment's network limits | Stage 3 |
+| D-018 | How database-connected tests are run, given the container's network limits | Stage 3 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
+| Audit | 18 moderate advisories in Jest's dev-only dependency chain | Stage 16 |
 
-## 6. Files created in Stage 1
+## 6. What exists in the repository
 
-`documentation/`: `README.md`, `PROJECT_OVERVIEW.md`, `REQUIREMENTS.md`, `DATABASE_SCHEMA.md`, `API_CONTRACT.md`, `ARCHITECTURE.md`, `SECURITY_PLAN.md`, `DECISIONS.md`, `TEST_PLAN.md`, `TEAM_RESPONSIBILITIES.md`, `SETUP_GUIDE.md` (partial), `USER_GUIDE.md` (outline only), `IMPLEMENTATION_STATUS.md`, and `diagrams/` (system architecture, ER diagram, item status flow, claim status flow, end-to-end flow).
+```text
+CLAUDE.md                       Standing instructions for the AI assistant (carries between sessions)
+README.md, .gitignore
+backend/
+  package.json, package-lock.json, .env.example, .gitignore, README.md
+  src/config/env.js             Settings loader (fails fast)
+  src/controllers/healthController.js
+  src/routes/index.js, healthRoutes.js
+  src/middleware/notFound.js, errorHandler.js
+  src/app.js, server.js
+  tests/health.test.js, config.test.js
+  (empty placeholders: src/models, services, validators, utils, scripts)
+documentation/                  All Stage 1 documents, updated for Stage 2
+```
+
+`mobile-app/` and `admin-dashboard/` do not exist yet. They are created by their own tools in Stages 7 and 12.

@@ -33,8 +33,8 @@ FINDIT/
 ├── README.md                  Project front page (Stage 2)
 ├── .gitignore                 Keeps secrets and node_modules out of Git (Stage 2)
 ├── backend/                   Node + Express API (Stages 2–16)
-├── mobile-app/                React Native + Expo app (Stages 7–14)
-├── admin-dashboard/           React + Vite website (Stages 12–15)
+├── mobile-app/                React Native + Expo app (folder created in Stage 7, D-020)
+├── admin-dashboard/           React + Vite website (folder created in Stage 12, D-020)
 └── documentation/             These documents
     └── diagrams/
 ```
@@ -75,7 +75,7 @@ backend/
 | `routes/` | Declares each endpoint and lists its checkpoints in order | `authRoutes.js`, `itemRoutes.js`, `claimRoutes.js`, `adminRoutes.js`, `index.js` |
 | `controllers/` | **Thin.** Take the validated input, call one service function, return the standard response | `authController.js`, `itemController.js`, … |
 | `services/` | **All real logic lives here**, so it is testable without HTTP | `authService.js`, `itemService.js`, `matchingService.js`, `claimService.js`, `recoveryService.js`, `notificationService.js`, `auditService.js`, `analyticsService.js`, `imageService.js`, `statusRules.js` |
-| `utils/` | Tiny shared helpers | `ApiError.js`, `asyncHandler.js`, `serializers.js` (decide which fields are public), `pagination.js`, `escapeRegex.js` |
+| `utils/` | Tiny shared helpers. (No `asyncHandler`: Express 5 forwards async errors itself, D-021) | `ApiError.js`, `serializers.js` (decide which fields are public), `pagination.js`, `escapeRegex.js` |
 | `scripts/` | Run by hand | `seedAdmin.js`, `seedDemoData.js` |
 | `tests/` | Jest + Supertest | `auth.test.js`, `items.test.js`, … |
 

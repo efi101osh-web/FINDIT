@@ -1,6 +1,8 @@
 # FINDIT: Setup Guide
 
-> **Status: PARTIAL.** Only Part 1 (getting your laptop ready) is written, because nothing else exists to run yet. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
+> **Status: PARTIAL.** Part 1 (getting your laptop ready) and Part 2 (running the backend) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
+>
+> **Part 2 was tested in a Linux cloud container, not yet on your laptop. Your run is the real test, so please tell me exactly what you see.**
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -57,7 +59,102 @@ git pull
 
 ### 1.5 Where the Git branch fits (plain English)
 
-A *branch* is a separate line of work. The assistant saves its work on the branch `claude/beautiful-clarke-jsqjs1`, not on `main`, so `main` stays stable. When a stage is reviewed and working, it can be merged into `main`. This is the "feature branch" habit the brief asks for. Merging into `main` happens only when you decide.
+A *branch* is a separate draft of the project. `main` is conventionally the "official" draft. For now there is only one branch, `claude/beautiful-clarke-jsqjs1`, and all the work lives there, which is perfectly fine. Once there is a working, reviewed milestone, a `main` branch can be created for the stable version, and new work stays on separate branches (the "feature branch" habit the brief asks for). That happens only when you decide.
+
+---
+
+## Part 2. Run the backend and check it works
+
+**Goal:** start the FINDIT server on your laptop and see it answer. This proves your laptop, Node.js and the project work together.
+
+### 2.1 Get the latest code
+
+In a terminal, inside the `FINDIT` folder:
+
+```bash
+git pull
+```
+
+### 2.2 Open the backend folder
+
+In VS Code: **File → Open Folder → FINDIT**, then **Terminal → New Terminal**, and:
+
+```bash
+cd backend
+```
+
+### 2.3 Install the libraries
+
+```bash
+npm install
+```
+
+**Success looks like:** a line such as `added 363 packages` (the number may differ slightly) and no red `ERR!` lines. You may see a yellow `deprecated` warning. That is expected and harmless.
+
+### 2.4 (Optional) create your settings file
+
+The defaults work, so you can skip this for now. When later stages need secrets, you will copy the example file like this:
+
+```bash
+cp .env.example .env
+```
+
+On Windows Command Prompt or PowerShell use `copy .env.example .env` instead. The real `.env` file is private and Git ignores it.
+
+### 2.5 Start the server
+
+```bash
+npm run dev
+```
+
+**Success looks like exactly this:**
+
+```text
+> findit-backend@0.1.0 dev
+> node --watch src/server.js
+
+FINDIT API is running (development mode).
+Health check: http://localhost:4000/api/v1/health
+Press Ctrl+C to stop.
+```
+
+The terminal now stays busy. That is correct: the server is running. If Windows shows a firewall pop-up for Node.js, choose **Allow access on private networks**.
+
+### 2.6 Check it in your browser
+
+Open <http://localhost:4000/api/v1/health>. **Success looks like:**
+
+```json
+{"success":true,"data":{"status":"ok","uptimeSeconds":12,"time":"2026-11-22T15:00:00.000Z"}}
+```
+
+(`uptimeSeconds` and `time` will differ.) Also try <http://localhost:4000/api/v1/nope>. You should see a tidy error message, `{"success":false,"error":{"code":"NOT_FOUND", ...}}`, and not a technical crash page.
+
+### 2.7 Run the automated tests
+
+Stop the server with **Ctrl+C**, or open a second terminal (**Terminal → New Terminal**, then `cd backend`), and run:
+
+```bash
+npm test
+```
+
+**Success looks like:**
+
+```text
+Test Suites: 2 passed, 2 total
+Tests:       20 passed, 20 total
+```
+
+### 2.8 If something goes wrong
+
+| What you see | Meaning and fix |
+|---|---|
+| `'npm' is not recognized` / `command not found` | Node.js is not installed, or the terminal was opened before installing it. Install Node 22 and **close and reopen VS Code** |
+| `Port 4000 is already in use` | Another program is using that port. Close it, or add `PORT=4001` to `backend/.env` |
+| `Settings problem: Invalid PORT ...` | Your `.env` has a bad value. Fix or delete that line |
+| `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x** |
+| Browser says "This site can't be reached" | The server is not running. Look at the terminal for the error |
+| Anything else | Copy the **whole** terminal text and send it to me |
 
 ---
 
@@ -65,7 +162,6 @@ A *branch* is a separate line of work. The assistant saves its work on the branc
 
 | Part | Written in |
 |---|---|
-| 2. Run the backend and check `/health` | Stage 2–3 |
 | 3. Create the MongoDB Atlas database and connect | Stage 3 |
 | 4. Create the first admin account | Stage 4 |
 | 5. Test the API with Postman | Stage 4–6 |

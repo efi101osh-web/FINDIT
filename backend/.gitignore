@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Secrets: never commit these. The .env.example file (fake values) is allowed.
+.env
+.env.*
+!.env.example
+
+# Test output
+coverage/
