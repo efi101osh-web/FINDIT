@@ -119,6 +119,7 @@ Environment: Linux container (Ubuntu 24.04, Node 22.23.5) using the new `findit`
 | `check:db` | Against a working database, using an environment variable and again using a real `.env` file | ✅ Both succeeded. `.env` confirmed ignored by Git |
 | Failure explanations | Missing setting; placeholder left in; wrong password (a real database authentication failure); nothing listening | ✅ Each gave a plain-English reason and exit code 1 |
 | No secrets in output | Searched all server and `check:db` output from a real wrong-password failure for the passwords | ✅ 0 occurrences |
+| **Fresh download from GitHub** | Cloned the pushed branch into an empty folder (commit `484fd23`, 52 files, author is the owner), then `npm ci`, `npm test`, `npm run test:db`, `check:db`, real server, CORS headers and the documentation checks, all from that copy | ✅ Installed 413 packages; default run 64 passed, 7 skipped; `test:db` 71 of 71 pass; `check:db` succeeded; health `database: connected`; the allowed website got its CORS header and another got none; documentation checks pass |
 
 **Bugs found by this verification and fixed**
 1. **MongoDB driver under Jest:** every database test failed with *"Missing required sub-document 'driver'"*. Root cause (confirmed in the driver's source): it loads `os` via a dynamic `import()` that Jest cannot run, so its handshake is empty. Plain Node connects fine (checked with 8.0.17 and 8.2.6). Fixed in the test helper only (D-026).
@@ -129,7 +130,6 @@ Environment: Linux container (Ubuntu 24.04, Node 22.23.5) using the new `findit`
 - **MongoDB Atlas:** the container cannot reach it. Needs the owner (Part 3 of the setup guide). This also confirms driver 7.8 against Atlas's actual server version.
 - The owner's laptop has not re-run the tests since Stage 3 (expect `64 passed, 7 skipped`).
 - `npm run test:db` on Windows (optional, about 760 MB one-time download).
-- Fresh download from GitHub after the Stage 3 push: *pending, recorded below once done.*
 
 ## 5. Known issues and open decisions
 
