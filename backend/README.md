@@ -10,7 +10,7 @@ The REST API for FINDIT (Node.js + Express + MongoDB). Design: [../documentation
 ## Setup and run
 
 ```bash
-npm install                 # download the libraries (first time, and after pulling changes)
+npm ci                      # download the exact library versions (first time, and after pulling changes)
 cp .env.example .env        # on Windows: copy .env.example .env  -- then put your MONGODB_URI in it
 npm run check:db            # checks your database connection (read-only)
 npm run dev                 # start with auto-restart when you save a file

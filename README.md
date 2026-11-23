@@ -44,7 +44,7 @@ You need **Node.js 22 or 24**, **Git** and a free **MongoDB Atlas** database. Fo
 In short, once the database is set up (inside `backend/`):
 
 ```bash
-npm install
+npm ci
 npm run check:db
 npm run dev
 ```

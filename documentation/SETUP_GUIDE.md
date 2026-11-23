@@ -85,10 +85,10 @@ cd backend
 
 ### 2.3 Install the libraries
 
-Run this again after any `git pull` that changes `package.json`:
+Use `npm ci` ("clean install"). It installs exactly the versions recorded in `package-lock.json` and **never rewrites that file**. (Plain `npm install` can rewrite it on your computer, and then `git pull` refuses to run; see the troubleshooting table.) Run it again after any `git pull` that changes `package.json` or `package-lock.json`:
 
 ```bash
-npm install
+npm ci
 ```
 
 **Success looks like:** a line such as `added 413 packages` (a few fewer on Windows is normal) and no red `ERR!` lines. Yellow `deprecated` warnings and a note about "moderate severity vulnerabilities" are expected and harmless. They come from the test tool, not our code. **Do not run `npm audit fix --force`.**
@@ -117,6 +117,7 @@ The **7 skipped** tests are the ones that need a real MongoDB. They are delibera
 | `'npm' is not recognized` / `command not found` | Node.js is not installed, or the terminal was opened before installing it. Install Node 22 or 24 and **close and reopen VS Code** |
 | `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x or 24.x** |
 | `running scripts is disabled on this system` (Windows PowerShell) | PowerShell's safety setting is blocking npm's script. Type `npm.cmd` instead of `npm` (same program), or use Command Prompt |
+| `git pull` says *"Your local changes to the following files would be overwritten by merge: backend/package-lock.json"* | `npm install` rewrote that file on your computer and Git is protecting it. Nothing of yours is lost. Run `git status` (only `package-lock.json` should be listed), then `git restore package-lock.json`, then `git pull`, then `npm ci`. If `git status` lists other files you did not change on purpose, send the output before restoring |
 | Any test says **failed** | Copy the **whole** terminal text and send it to the assistant |
 
 ---
