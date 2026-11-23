@@ -170,6 +170,7 @@ Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.1
 | No secrets in logs | Searched the server log for every password and the signing key | ✅ 0 occurrences |
 | Simultaneous duplicate sign-ups | Five identical sign-ups at the same instant | ✅ Exactly one account |
 | Dependency audit | `npm audit --omit=dev` | ✅ **0 vulnerabilities in the 106 production packages** (including the four new libraries) |
+| **Fresh download from GitHub** | Cloned the pushed branch (commit `20a853d`, 66 files, author is the owner) into an empty folder, then `npm ci` (431 packages), `npm test`, `npm run test:db`, the documentation checks and a JSON check of the Postman collection | ✅ Default: 140 passed, 60 skipped. `test:db`: **200 of 200 pass**. Documentation checks pass. Collection is valid |
 
 **Problems found by this verification and fixed**
 1. **Rate-limit design flaw:** the first design counted every sign-up and login request (10 per address per 15 minutes). It would have locked out the owner after about ten Postman clicks, and a whole campus behind one shared address after ten logins. Redesigned to count only **failed** logins per address and email (D-030).
@@ -182,7 +183,6 @@ Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.1
 - **The owner's laptop and MongoDB Atlas:** creating the real first administrator and running the Postman collection there (setup guide Parts 4 and 5). Nothing from the container can reach Atlas.
 - **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12).
 - **The Postman app on Windows** (the collection was run with Newman, Postman's command-line runner).
-- **Fresh download from GitHub after the Stage 4 push:** *pending, recorded below once done.*
 
 ## 5. Known issues and open decisions
 
