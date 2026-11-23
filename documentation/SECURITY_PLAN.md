@@ -82,6 +82,7 @@ These are deliberate trade-offs. They will be repeated honestly in the final doc
 - Test and demo data is **fake**. Seed passwords come from `.env`, never from source code.
 - If a secret is ever committed by accident: **treat it as compromised, rotate it immediately** (change the password/key at the provider), then clean the history. Deleting the file in a later commit is not enough because Git remembers.
 - Before each push in later stages, a quick secret scan is run (`git diff --cached` review plus a scanning tool).
+- If a password or key appears **anywhere except your private `.env`** (a chat, an email, a screenshot, a screen share), treat it as leaked and replace it straight away. In Atlas that means a new database user with a new password, deleting the old user, and updating `.env`. This happened once during Stage 3 and was handled this way. When asking for help, replace secrets with `***`.
 
 ## 6. Stage 16 security review checklist
 

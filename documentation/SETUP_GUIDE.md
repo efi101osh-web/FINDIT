@@ -2,7 +2,7 @@
 
 > **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend) and Part 3 (create the database and run the server) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB. It has not yet been run against MongoDB Atlas, because the container cannot reach Atlas. Your run is the first real Atlas test.** If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -105,7 +105,7 @@ npm test
 [tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
 
 Test Suites: 2 skipped, 4 passed, 4 of 6 total
-Tests:       7 skipped, 64 passed, 71 total
+Tests:       7 skipped, 66 passed, 73 total
 ```
 
 The **7 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
@@ -126,46 +126,63 @@ The **7 skipped** tests are the ones that need a real MongoDB. They are delibera
 
 **Goal:** create your own free database in the cloud (MongoDB Atlas), connect FINDIT to it, and see the health check say `"database":"connected"`.
 
-> The Atlas website changes its screens from time to time. The steps below describe *what* to do; button names may look slightly different. If you get stuck, take a screenshot (**cover any passwords first**) or describe what you see.
+> The Atlas website changes its screens from time to time. The steps below describe *what* to do, based on how the screens looked when this was first tested. Button names may look slightly different. If you get stuck, describe what you see, or send a screenshot with **every password and connection string covered**.
 >
-> **Golden rule:** your *connection string* contains your database password. **Never paste it into chat, commit it, screenshot it or share it.** It lives only in `backend/.env`, which Git ignores. If it ever leaks, change the database password in Atlas straight away.
+> **Golden rule:** your *connection string* contains your database password. **Never paste it into chat, commit it, screenshot it or share it.** It lives only in `backend/.env`, which Git ignores.
+>
+> **If a password ever appears anywhere except your private `.env`** (a chat, an email, a screenshot, a screen share), treat it as leaked and replace it straight away. In Atlas open **Database Access**, create a new user with a new password, delete the old user, and update `.env`. It takes about three minutes, and it makes the leaked password useless. When you need help with something that contains a password, replace the password with `***` first.
 
 ### 3.1 Create an Atlas account
 
-Go to <https://www.mongodb.com/atlas> and choose **Try Free**. Sign up with your email or Google account, verify your email if asked, and answer the welcome questions (any answers are fine).
+Go to <https://www.mongodb.com/atlas> and choose **Try Free**. You can use **Sign up with Google**, or fill in the form (first name, last name, email and a strong password; Company is optional). Verify your email if asked and answer the welcome questions (any answers are fine). The account password is **not** the database password you create later.
 
 ### 3.2 Create a free cluster
 
-Create a new deployment (also called a *cluster*). Choose the **M0 / Free** option. Pick any cloud provider, choose the region **nearest to you**, and name it `findit`. Create it, then wait a minute or two while it starts.
+On the **Set up your cluster** screen:
 
-The free tier does not need a payment card. **If Atlas asks for card details for the free option, stop and tell the assistant.**
+- **Free (M0)** must be selected. This is the free tier, and **no payment card is needed**. If Atlas asks for card details for the free option, stop and tell the assistant.
+- **Name:** `Cluster0` is fine. Our code does not care what it is called.
+- **Preload sample dataset:** leave it **unticked**. We do not need the example data.
+- **Region:** the one nearest to you (for example Paris).
+- **Do not** click *"Skip - I'm here for something else"*.
 
-### 3.3 Create a database user
+Click **Create** and wait a minute or two.
 
-In the left menu go to **Database Access** (under *Security*) → **Add New Database User**.
+### 3.3 Create a database user with limited rights
 
-- Authentication: **Password**
-- Username: `findit_app`
-- Password: make your own, **letters and digits only**, at least 12 characters, e.g. a mix like `Kq7mTz2vWb9XcL4n`. (Special characters can break the connection string.) Save it somewhere private, such as a password manager. Do not save it in the project.
-- Privileges: **Read and write to any database**
+Atlas shows a quick setup screen. It **adds your current IP address automatically** and **creates a first database user with the powerful "Atlas Admin" role**. FINDIT does not need that much power, so we create a limited user instead:
 
-Click **Add User**.
+1. In the left menu open **Database Access** → **Add New Database User**.
+2. Authentication method: **Password**. Username: `findit_app`.
+3. Password: make your own, **letters and digits only**, at least 12 characters (special characters can break the connection string). Save it in a private place such as a password manager, **not** in the project and **not** in chat.
+4. Built-in role: **Read and write to any database**.
+5. Leave **Custom Roles**, **Specific Privileges** and **Restrict Access** alone (nothing selected), and keep **Temporary User turned OFF**. A temporary user is deleted automatically, and your app would suddenly stop connecting.
+6. Click **Add User**.
+7. Back in the list, **delete the automatically created Atlas Admin user** (**Delete** next to it). From now on only `findit_app` can connect.
 
-### 3.4 Allow your computer to connect
+### 3.4 Check your computer is allowed to connect
 
-In the left menu go to **Network Access** → **Add IP Address** → **Add Current IP Address** → **Confirm**.
+In the left menu open **Network Access**. Your current IP address should already be on the list (Atlas added it during setup). If not, choose **Add IP Address** → **Add Current IP Address** → **Confirm**.
 
-Atlas only accepts connections from addresses on this list. **When you change network** (home Wi-Fi, campus Wi-Fi, a phone hotspot), your address changes, and you must repeat this step. It is the most common reason for connection failures. For a short demo on an unknown network you can choose **Allow access from anywhere**, which is less secure, so remove it afterwards.
+Atlas only accepts connections from addresses on this list. **When you change network** (home Wi-Fi, campus Wi-Fi, a phone hotspot), your address changes and you must add the new one. It is the most common reason for connection failures. For a short demo on an unknown network you can choose **Allow access from anywhere**, which is less secure, so remove it afterwards.
 
-### 3.5 Copy the connection string
+### 3.5 Get the connection string
 
-Go to **Database** → find your cluster → **Connect** → **Drivers** → choose **Node.js** → copy the connection string. It looks like this (with your own cluster address):
+Go to **Database** → find your cluster → **Connect** → **Drivers** → **Node.js**. Leave **Enable network compression** unticked. Atlas shows a connection string in one of two shapes. **Both work with FINDIT:**
 
 ```text
-mongodb+srv://<db_username>:<db_password>@cluster0.abc12.mongodb.net/?retryWrites=true&w=majority&appName=findit
+mongodb+srv://<db_username>:<db_password>@cluster0.abc12.mongodb.net/?appName=Cluster0
 ```
 
-Replace `<db_username>` with `findit_app` and `<db_password>` with your password. **Replace each placeholder completely, including the `<` and `>` signs.**
+or a longer one with three server names:
+
+```text
+mongodb://<db_username>:<db_password>@ac-abc12-shard-00-00.abc12.mongodb.net:27017,ac-abc12-shard-00-01.abc12.mongodb.net:27017,ac-abc12-shard-00-02.abc12.mongodb.net:27017/?ssl=true&replicaSet=atlas-abc12-shard-0&authSource=admin
+```
+
+Atlas also shows example code (`import { MongoClient } ...`). **Ignore it.** FINDIT already contains its own connection code, and you only need the address.
+
+Replace `<db_username>` with `findit_app` and `<db_password>` with your password, **removing the `<` and `>` signs too**.
 
 ### 3.6 Create your private settings file
 
@@ -175,13 +192,21 @@ In the `backend` folder, copy the example file to a new file named `.env`:
 cp .env.example .env
 ```
 
-On Windows Command Prompt or PowerShell use `copy .env.example .env` instead. Open `backend/.env` in VS Code and set the line:
+On Windows Command Prompt or PowerShell use `copy .env.example .env` instead. Open `backend/.env` in VS Code and make the line read:
 
 ```text
-MONGODB_URI=<paste your finished connection string here, with no quotes and no spaces>
+MONGODB_URI=<your finished connection string>
 ```
 
-Save the file. **Check Git ignores it:** run `git status`. The file `.env` must **not** appear in the list. (If it does, stop and tell the assistant.)
+Rules for that line: the label `MONGODB_URI=` appears **only once, at the very start**; the string follows it **directly**; **one line, no quotes, no spaces, no `<` or `>`**. Save with Ctrl+S. Then check Git ignores the file: run `git status`. `.env` must **not** appear in the list.
+
+To check the start of the line without showing the password, run this (it prints only the first 20 characters):
+
+```powershell
+Get-Content .env | Where-Object { $_ -notlike '#*' -and $_ -like '*mongo*' } | ForEach-Object { $_.Substring(0, [Math]::Min(20, $_.Length)) }
+```
+
+A correct file prints `MONGODB_URI=mongodb:` and `MONGODB_DB_NAME=find`.
 
 ### 3.7 Check the connection
 
@@ -189,7 +214,7 @@ Save the file. **Check Git ignores it:** run `git status`. The file `.env` must 
 npm run check:db
 ```
 
-**Success looks like this** (the version and address will differ):
+**Success looks like this** (the version and address will differ a little):
 
 ```text
 Connecting to MongoDB (waiting up to 10 seconds)...
@@ -199,7 +224,7 @@ SUCCESS: connected to MongoDB.
   Server address: ac-abc12-shard-00-00.abc12.mongodb.net
 ```
 
-This command only *reads*: it never changes your data, and it never prints your password. If it fails, it explains what to check. See 3.9. It is safe to paste its output to the assistant.
+This command only *reads*: it never changes your data, and it never prints your password, so it is safe to paste its output to the assistant. If it fails, it explains what to check. See 3.9.
 
 ### 3.8 Start the server
 
@@ -219,7 +244,7 @@ Health check: http://localhost:4000/api/v1/health
 Press Ctrl+C to stop.
 ```
 
-Open <http://localhost:4000/api/v1/health>. You should now see `"database":"connected"`:
+Open <http://localhost:4000/api/v1/health>. You should see `"database":"connected"`:
 
 ```json
 {"success":true,"data":{"status":"ok","database":"connected","uptimeSeconds":12,"time":"2026-11-22T15:00:00.000Z"}}
@@ -233,8 +258,10 @@ The program explains problems in plain words. The common ones:
 
 | Message starts with | Meaning and fix |
 |---|---|
-| `Settings problem: MONGODB_URI is not set` | The `.env` file is missing, in the wrong folder (it must be inside `backend`), or the line is empty. Redo 3.6 |
-| `Settings problem: MONGODB_URI still contains a placeholder` | You left `<db_password>` (or `<db_username>`) in. Replace the whole placeholder including the `<` `>` |
+| `Settings problem: MONGODB_URI is not set` | The `.env` file is missing, is in the wrong folder (it must be inside `backend`), or the line is empty. Redo 3.6 |
+| `Invalid MONGODB_URI. The value starts with "MONGODB_URI=" again` | The label was pasted twice. Delete the second `MONGODB_URI=` so the line reads `MONGODB_URI=mongodb://...` |
+| `Invalid MONGODB_URI. It must start with ...` | Something comes before `mongodb`. Run the 20-character check in 3.6 to see the start of the line, and remove whatever precedes `mongodb` |
+| `MONGODB_URI still contains a placeholder` | You left `<db_username>` or `<db_password>` in. Replace the whole placeholder including the `<` `>` |
 | `The database rejected the username or password` | Wrong username or password, or the password has special characters. In Atlas → Database Access, edit the user and set a new letters-and-digits password. Update `.env` |
 | `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4. Also check your internet, a VPN, and that the cluster is not paused |
 | `The database address could not be found` | The part after `@` in the connection string is wrong, or you are offline. Copy the string from Atlas again |
@@ -250,7 +277,7 @@ If it is none of these, copy the **whole** terminal text and send it. (The tool 
 npm run test:db
 ```
 
-On success you will see `Tests: 71 passed, 71 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+On success you will see `Tests: 73 passed, 73 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
 
 ---
 

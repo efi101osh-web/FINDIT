@@ -1,6 +1,6 @@
 # FINDIT: Test Plan
 
-> **Status:** The plan is written (88 backend cases). Automated tests began in Stage 2 and now number 71 Jest tests, covering 10 of the planned backend cases. Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+> **Status:** The plan is written (88 backend cases). Automated tests began in Stage 2 and now number 73 Jest tests, covering 10 of the planned backend cases. Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
 
 ## 1. Strategy
 
@@ -189,4 +189,5 @@ Real results only, with the date and where they were run.
 | 2026-11-22 | Fresh clone from GitHub (Linux container) | Same 20 tests, plus manual server check | ✅ 20 of 20 pass after a clean `npm install` | Confirms the pushed repository is complete and self-contained |
 | 2026-11-22 | **Owner's laptop** (Windows, PowerShell, Node 24.20.0) | The same 20 Jest tests; manual check of the health and 404 pages in a browser | ✅ 20 of 20 pass (7.5 s); both pages as expected | Reported by the owner. First run on Node 24 |
 | 2026-11-22 | Cloud container, real MongoDB 8.0.17 | Stage 3: T-HLT-01 (full), T-SEC-01, T-SEC-02, T-DB-01 to T-DB-04, T-INV-02, T-INV-03, T-SEC-04, plus settings, secret-hygiene and error-explanation tests | ✅ `npm run test:db`: 71 of 71 pass. Plain `npm test`: 64 pass, 7 skipped (database tests) | Shown to fail when code was deliberately broken (3 break-ins, all caught). Also checked end to end with the real server and `check:db` |
-| *(pending)* | **Owner's laptop** | Plain `npm test` after Stage 3 (expect 64 passed, 7 skipped), then `npm run check:db` against Atlas | Needs laptop | Atlas cannot be reached from the container |
+| 2026-11-23 | **Owner's laptop** (Windows, PowerShell, Node 24.20.0) + MongoDB Atlas (8.0.39) | Plain `npm test` after Stage 3; `npm run check:db`; `npm run dev` with the health page | ✅ `npm test`: 64 passed, 7 skipped, 0 failed. `check:db`: connected to Atlas. Health: `database: connected` | Reported by the owner. First verification against Atlas |
+| 2026-11-23 | Cloud container, real MongoDB 8.0.17 | Settings tests extended (doubled-label slip) | ✅ `test:db`: 73 of 73 pass. Plain `npm test`: 66 passed, 7 skipped | |

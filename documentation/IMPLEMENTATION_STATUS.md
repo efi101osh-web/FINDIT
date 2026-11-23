@@ -1,6 +1,6 @@
 # FINDIT: Implementation Status
 
-**Last updated:** 2026-11-22 (Stage 3 built; Atlas check pending)
+**Last updated:** 2026-11-23 (end of Stage 3)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -13,9 +13,9 @@ This file is the **single source of truth for what actually exists and has been 
 | | |
 |---|---|
 | **Current stage** | Stage 3: Backend foundation and MongoDB connection |
-| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**. **Not yet verified against MongoDB Atlas or on the owner's laptop**, because the container cannot reach Atlas. The owner's step is [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 3 (`npm run check:db`). Stages 1 and 2 are fully verified |
-| **Next stage** | Stage 4: Authentication and user management (after the Atlas check passes) |
-| **What works today** | The backend connects to MongoDB and answers `GET /api/v1/health` (including `database: connected`); sends security headers; enforces a CORS allow-list; explains database problems in plain English without ever showing the password; 71 automated tests pass (64 by default plus 7 that need a real database) |
+| **State** | ✅ Stages 1 to 3 complete and verified: in the cloud container against a real MongoDB 8.0.17, **and on the owner's Windows laptop against a real MongoDB Atlas free cluster** (server 8.0.39) |
+| **Next stage** | Stage 4: Authentication and user management |
+| **What works today** | The backend connects to MongoDB and answers `GET /api/v1/health` (including `database: connected`); sends security headers; enforces a CORS allow-list; explains database problems in plain English without ever showing the password; 73 automated tests pass (66 by default plus 7 that need a real database) |
 | **Everything else** | Planned only: database, accounts, items, claims, mobile app, dashboard |
 
 ## 2. Stages
@@ -24,7 +24,7 @@ This file is the **single source of truth for what actually exists and has been 
 |---|---|---|---|
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
-| 3 | Backend foundation and MongoDB connection | ⚠️ | Verified against a real local MongoDB in the container. **Atlas check pending on the owner's laptop** |
+| 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
 | 4 | Authentication and user management | ⬜ | |
 | 5 | Lost and found item reporting | ⬜ | |
 | 6 | Browsing and search | ⬜ | |
@@ -47,13 +47,13 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **1**: `GET /health` (complete) | Container with a real MongoDB. Against Atlas: pending |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **1**: `GET /health` (complete) | Container (real MongoDB) and owner's laptop (Atlas): `database: connected` |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | 0 | 0 |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **2 implemented** (S-15, S-16), **3 partial** (below) | Container (automated tests) |
-| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 88 | 10 covered by automated tests | Container |
-| Automated tests (Jest) | n/a | 71 (64 run by default, 7 need a real database) | `test:db`: 71 of 71 pass (container). Default `npm test`: 64 pass, 7 skipped (container). Owner's laptop: not yet re-run since Stage 2 |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **2 implemented** (S-15, S-16), **3 partial** (below) | Container (automated tests). Owner's laptop for the secrets-related ones |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 88 | 10 covered by automated tests | Container (and owner's laptop for the non-database ones) |
+| Automated tests (Jest) | n/a | 73 (66 run by default, 7 need a real database) | `test:db`: 73 of 73 pass (container). Default `npm test`: 66 pass, 7 skipped (container). Owner's laptop ran 64 passed, 7 skipped on the previous commit (the 2 newest tests were added after) |
 
 **Implemented and tested in Stage 3:**
 - **S-15 Security headers:** Helmet's standard headers (content-type sniffing protection, framing protection, CSP, HSTS, referrer policy) on every response including errors; framework header removed.
@@ -126,20 +126,35 @@ Environment: Linux container (Ubuntu 24.04, Node 22.23.5) using the new `findit`
 2. **Misleading shutdown message:** Ctrl+C printed "Database connection lost. Trying to reconnect...". Fixed.
 3. **`[object Object]`** at the end of the unreachable-database explanation. Fixed, with tests.
 
+### Stage 3 on the owner's laptop and MongoDB Atlas, 2026-11-23
+Environment (reported by the owner): Windows, PowerShell, Node v24.20.0; MongoDB Atlas free (M0) cluster, region Paris, MongoDB server **8.0.39**.
+
+| Check | Result |
+|---|---|
+| `git pull`, then `npm ci` | ✅ After restoring a `package-lock.json` that `npm install` had rewritten (see below). `npm ci` added 411 packages (the container's 413; the 2-package difference is platform-specific optional packages) |
+| `npm test` | ✅ 4 suites passed, 2 skipped; **64 passed, 7 skipped, 0 failed** (9 s) |
+| `npm run check:db` against Atlas | ✅ **SUCCESS**: database `findit`, server 8.0.39, address `ac-...-shard-00-00...mongodb.net`. Confirms Mongoose 9 / driver 7.8 against a real Atlas cluster, and the credentials, the IP allow-list and the connection-string format (the three-server `mongodb://` form that Atlas offered) |
+| `npm run dev` + health page | ✅ `{"success":true,"data":{"status":"ok","database":"connected",...}}` |
+| Atlas security setup | ✅ Owner reports: leaked Atlas Admin user deleted; the app uses a limited `findit_app` user |
+
+**Problems met during the owner's setup, and what changed**
+1. **`git pull` blocked by `package-lock.json`:** `npm install` on the laptop rewrote it (cause not reproduced in the container; most likely a newer npm). Fix: `git restore package-lock.json`. Prevention: the guides now use `npm ci`, which never rewrites the lock file.
+2. **A database password was pasted into the chat.** It was rotated (new user, old user deleted). The setup guide and security plan now say what to do and to mask secrets when asking for help. The Atlas quick setup also creates an **Atlas Admin** user, so the guide now has the owner create a limited user and delete the admin one.
+3. **`MONGODB_URI=MONGODB_URI=...`** (label pasted twice) gave a generic error. The program now recognises this slip and says exactly what to delete (new tests added).
+
 **Not verified in Stage 3**
-- **MongoDB Atlas:** the container cannot reach it. Needs the owner (Part 3 of the setup guide). This also confirms driver 7.8 against Atlas's actual server version.
-- The owner's laptop has not re-run the tests since Stage 3 (expect `64 passed, 7 skipped`).
-- `npm run test:db` on Windows (optional, about 760 MB one-time download).
+- `npm run test:db` on Windows (optional; about 760 MB one-time download). The owner's laptop has not re-run the two newest tests.
+- That the `findit_app` user's role is exactly "Read and write to any database" (owner-reported, not independently checked).
+- Atlas free-tier limits (about 512 MB storage) were not measured.
 
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
 |---|---|---|
-| **Owner action** | Create the Atlas database and run `npm run check:db` ([SETUP_GUIDE.md](SETUP_GUIDE.md) Part 3). This is what fully verifies Stage 3 | Before Stage 4 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
 | Audit | 18 moderate advisories in Jest's dev-only dependency chain | Stage 16 |
 
-*D-018 (test database) was settled in Stage 3.*
+*D-018 (test database) was settled in Stage 3. The Atlas database user will be narrowed from "read and write to any database" to the `findit` database only in the Stage 16 security review.*
 
 ## 6. What exists in the repository
 
@@ -157,7 +172,7 @@ backend/
   src/server.js                 settings -> database -> web server -> clean shutdown
   scripts/checkDatabase.js      npm run check:db   (read-only Atlas check)
   scripts/testWithDatabase.js   npm run test:db    (all tests with a real throwaway MongoDB)
-  tests/                        health, config, security, dbErrors, database, databaseAuth (+ setup/ and helpers/)
+  tests/                        health, config, security, dbErrors, database, databaseAuth (+ setup/ and helpers/)  (73 tests)
   (empty placeholders: src/models, services, validators, utils)
 documentation/                  All documents, updated for Stage 3
 ```

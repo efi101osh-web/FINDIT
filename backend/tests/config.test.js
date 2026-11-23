@@ -62,6 +62,24 @@ describe('loadConfig: MONGODB_URI (a secret)', () => {
     expect(() => loadConfig({ MONGODB_URI: uri })).toThrow(/MONGODB_URI/);
   });
 
+  test('recognises the "label pasted twice" slip and says exactly what to remove', () => {
+    const doubled = 'MONGODB_URI=mongodb://alice:Sup3rSecretPw@ac-1.example.mongodb.net:27017/?ssl=true';
+    let message = '';
+    try {
+      loadConfig({ MONGODB_URI: doubled });
+    } catch (err) {
+      message = err.message;
+    }
+    expect(message).toMatch(/starts with "MONGODB_URI=" again/);
+    expect(message).toMatch(/delete the second/);
+    expect(message).not.toContain('Sup3rSecretPw'); // never echoes the secret
+    expect(message).not.toContain('example.mongodb.net');
+  });
+
+  test('a value with anything before "mongodb" is refused with a pointer to the start of the value', () => {
+    expect(() => loadConfig({ MONGODB_URI: 'findit_app:abc@host/' })).toThrow(/very beginning/);
+  });
+
   test('the error message never contains the secret it was given', () => {
     const bad = 'mongodb+srv://alice:Sup3rSecretPw@cluster0.example.mongodb.net/<oops>';
     let message = '';

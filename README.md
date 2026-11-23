@@ -12,16 +12,15 @@ FINDIT is a connected system that helps campus users report lost and found items
 
 ## Current status
 
-**Stage 3 of 20: backend foundation and MongoDB connection.**
+**Stages 1 to 3 of 20 are complete. Next: Stage 4, accounts and login.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).
 - Security headers and a CORS allow-list are in place.
 - Unknown URLs and malformed requests get clean, standard JSON error replies.
 - Bad settings and database problems stop the server with a plain-English explanation, never showing the password.
-- 71 automated tests pass (7 of them need a real database; see the setup guide).
-
-Not yet verified: the connection to **MongoDB Atlas** itself (needs the owner's laptop).
+- 73 automated tests pass (7 of them need a real database; see the setup guide).
+- The connection to a real **MongoDB Atlas** cluster has been verified from the owner's laptop.
 
 Everything else (database, accounts, items, claims, the apps) is **planned, not built**. The honest, always-current record is [documentation/IMPLEMENTATION_STATUS.md](documentation/IMPLEMENTATION_STATUS.md).
 

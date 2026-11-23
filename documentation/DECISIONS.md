@@ -153,6 +153,11 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Status:** Accepted
 Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-core 11.4.0. All support Node 22 and 24. Mongoose 9 is a recent major version, so each Mongoose feature used from Stage 4 is verified by a test against the real database instead of assumed from older versions.
 
+## D-028: Atlas database access: a limited user, either connection-string form
+**Status:** Accepted (Stage 3)
+**Decision:** The app connects as a dedicated Atlas user `findit_app` with the built-in role **Read and write to any database**, never as the Atlas Admin user that the quick setup creates automatically (which is deleted). Both the `mongodb+srv://` and the longer three-server `mongodb://` connection strings are supported (Atlas showed the second form to the owner). The role will be narrowed to the `findit` database only in the Stage 16 security review.
+**Why:** Least privilege: if the connection string ever leaks, the damage is limited. Atlas's quick setup creates an admin user and shows its password on screen, and the owner pasted a password into chat once. That password was rotated, and the guides now explain how to do this and to mask secrets when asking for help.
+
 ---
 
 ## How to add a decision

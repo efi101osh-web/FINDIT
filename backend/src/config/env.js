@@ -27,8 +27,20 @@ function parseMongoUri(raw) {
   const uri = String(raw || '').trim();
   if (uri === '') return undefined;
 
+  // The most common beginner slip: pasting the whole line ("MONGODB_URI=...") after the
+  // "=", so the label appears twice. Say so plainly, without repeating the value (a secret).
+  if (/^MONGODB_URI\s*=/i.test(uri)) {
+    throw new Error(
+      'Invalid MONGODB_URI. The value starts with "MONGODB_URI=" again. In backend/.env the label ' +
+        'must appear only once, at the very start of the line: MONGODB_URI=mongodb://... ' +
+        '(delete the second "MONGODB_URI=").'
+    );
+  }
   if (!/^mongodb(\+srv)?:\/\//.test(uri)) {
-    throw new Error('Invalid MONGODB_URI. It must start with "mongodb+srv://" or "mongodb://".');
+    throw new Error(
+      'Invalid MONGODB_URI. It must start with "mongodb+srv://" or "mongodb://". Check the very ' +
+        'beginning of the value in backend/.env: nothing may come before "mongodb".'
+    );
   }
   if (/[<>]/.test(uri)) {
     throw new Error(
