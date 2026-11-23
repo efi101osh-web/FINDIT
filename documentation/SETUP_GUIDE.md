@@ -2,7 +2,7 @@
 
 > **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend) and Part 3 (create the database and run the server) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 10 requests, 17 checks, 0 failed). They have not yet been run on the owner's laptop.** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -91,7 +91,7 @@ Use `npm ci` ("clean install"). It installs exactly the versions recorded in `pa
 npm ci
 ```
 
-**Success looks like:** a line such as `added 413 packages` (a few fewer on Windows is normal) and no red `ERR!` lines. Yellow `deprecated` warnings and a note about "moderate severity vulnerabilities" are expected and harmless. They come from the test tool, not our code. **Do not run `npm audit fix --force`.**
+**Success looks like:** a line such as `added 431 packages` (a couple fewer on Windows is normal) and no red `ERR!` lines. Yellow `deprecated` warnings and a note about "moderate severity vulnerabilities" are expected and harmless. They come from the test tool, not our code. **Do not run `npm audit fix --force`.**
 
 ### 2.4 Run the automated tests
 
@@ -104,11 +104,11 @@ npm test
 ```text
 [tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
 
-Test Suites: 2 skipped, 4 passed, 4 of 6 total
-Tests:       7 skipped, 66 passed, 73 total
+Test Suites: 7 skipped, 7 passed, 7 of 14 total
+Tests:       60 skipped, 140 passed, 200 total
 ```
 
-The **7 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
+The **60 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
 
 ### 2.5 If something goes wrong
 
@@ -277,7 +277,135 @@ If it is none of these, copy the **whole** terminal text and send it. (The tool 
 npm run test:db
 ```
 
-On success you will see `Tests: 73 passed, 73 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+On success you will see `Tests: 200 passed, 200 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+
+---
+
+## Part 4. Create your first administrator account
+
+**Goal:** make the server ready for logins and create the first administrator in your Atlas database. FINDIT has **no public way to become an administrator**: sign-up only ever creates regular users, so you create the first administrator yourself, on your own computer.
+
+### 4.1 Get the latest code
+
+In the `backend` folder:
+
+```bash
+git pull
+```
+
+```bash
+npm ci
+```
+
+```bash
+npm test
+```
+
+You should see `Tests: 60 skipped, 140 passed, 200 total`, with 0 failed.
+
+### 4.2 Make a secret key for logins
+
+```bash
+npm run make:secret
+```
+
+It prints one long line of 96 letters and digits. **Copy it.** This key signs the "tickets" (tokens) people receive when they log in. Anyone who has it could forge a login, so it lives **only** in `backend/.env`. Never paste it into chat or commit it. (If it ever leaks, run this command again to make a new one. Everyone is then simply logged out.)
+
+### 4.3 Add the new settings to `.env`
+
+Open the `backend/.env` file you already have (do **not** copy `.env.example` over it, or you would lose your database setting). Add these four lines at the bottom, replacing every `<...>` part **including the `<` and `>` signs**:
+
+```text
+JWT_SECRET=<paste the 96-character key here>
+SEED_ADMIN_EMAIL=<the email you will log in with as administrator>
+SEED_ADMIN_PASSWORD=<a strong password: 8 or more characters with at least one letter and one number>
+SEED_ADMIN_NAME=<your name>
+```
+
+Rules: no quotes, no spaces around `=`, each label appears only once, one line each. Choose a password you have never used anywhere else (12 or more characters is better), and **do not paste it into chat**. Save with Ctrl+S.
+
+### 4.4 Create the administrator
+
+```bash
+npm run seed:admin
+```
+
+**Success looks like** (with your email):
+
+```text
+SUCCESS: you@example.com is now an administrator.
+NEXT: delete the SEED_ADMIN_PASSWORD line from backend/.env. It is not needed any more.
+```
+
+The script never prints your password. It is safe to run again: it will say `Nothing to do: ... is already an administrator`, and it never changes an existing password.
+
+### 4.5 Remove the password from `.env`
+
+Delete the whole `SEED_ADMIN_PASSWORD=...` line from `backend/.env` and save. It was only needed once, and a password does not belong in a file for longer than necessary.
+
+### 4.6 Start the server
+
+```bash
+npm run dev
+```
+
+**Success looks like** the same as before: `Connected to MongoDB (database "findit").` then `FINDIT API is running (development mode).` and the health-check line. Leave it running for Part 5.
+
+### 4.7 If something goes wrong
+
+| Message starts with | Meaning and fix |
+|---|---|
+| `Settings problem: JWT_SECRET is not set` | The `JWT_SECRET=` line is missing, empty or misspelled in `backend/.env`. Redo 4.2 and 4.3 |
+| `Invalid JWT_SECRET. It is too short` | Paste the **whole** 96-character line from `npm run make:secret`, with nothing cut off |
+| `Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in backend/.env first` | Those two lines are missing or empty. Redo 4.3 |
+| `Could not create the administrator: SEED_ADMIN_PASSWORD: Password must contain...` | The password is too weak. It needs 8 or more characters with at least one letter and one number |
+| `Could not create the administrator: SEED_ADMIN_EMAIL: Enter a valid email address.` | The email is not valid. Check for typos or leftover `<` `>` |
+| `... already exists as a regular account, so nothing was changed` | That email has already signed up as a normal user. To make it an administrator on purpose, run `npm run seed:admin -- --promote` |
+
+---
+
+## Part 5. Try the API with Postman
+
+**Goal:** use FINDIT's API by clicking buttons, check that login works, and see the safety rules refuse bad requests. Postman is a free tool for sending requests to an API and checking the replies.
+
+### 5.1 Open Postman and import the requests
+
+Open Postman (Part 1.1). It may ask you to create a free account. That is fine. Click **Import**, then choose the file `documentation/postman/FINDIT.postman_collection.json` from your `FINDIT` folder (drag it in or browse to it). A collection called **FINDIT API** appears in the left list.
+
+*Postman changes its screens often. If yours looks different, describe what you see.*
+
+### 5.2 Run the requests in order
+
+The server from Part 4 must be running. Open the collection, click request **0. Health check**, then **Send**. Under the reply, the **Test Results** tab shows green **PASS** lines. Do the same for **1, 2, 3, 4, 5** in order:
+
+| Request | What it does | What to look for |
+|---|---|---|
+| 0. Health check | Is the server and database up? | `database` is `connected` |
+| 1. Register | Creates a brand-new throwaway test account (a fresh email every time) | Status **201**; `role` is `user`; no password hash in the reply |
+| 2. Login | Logs in; the token is saved automatically | Status **200** |
+| 3. Who am I | Shows the logged-in account | Status **200**; your test email |
+| 4. Update my profile | Changes the name | Status **200** |
+| 5. Change my password | Changes the password | Status **200** |
+
+Then open the last folder, **Things that SHOULD be refused**, and send each request. For these, a green **PASS** means the refusal **worked**: signing up as an admin is refused, a wrong password is refused, no token is refused, and changing your email through the profile is refused.
+
+You can also run everything at once: hover over the collection, click the **⋯** menu, choose **Run collection**, then **Run**. Everything should be green, with **0 failed**.
+
+### 5.3 Check that your administrator works
+
+Open the collection and go to its **Variables** tab. In the **Current value** column, type your administrator email and password into `adminEmail` and `adminPassword`, and save. Then send **Optional: log in as the ADMINISTRATOR**. You should get status **200**, and the test **this account is an administrator** passes. When you are done, **clear those two values** (do not share or export the collection while they are filled in).
+
+### 5.4 If something goes wrong
+
+| What you see | Meaning and fix |
+|---|---|
+| `Could not get any response` / `ECONNREFUSED` | The server is not running. Start it with `npm run dev` (Part 4.6) and look for the `FINDIT API is running` line |
+| **3. Who am I** gives `401` | There is no token yet. Send **1. Register** or **2. Login** first, then try again |
+| `429 RATE_LIMITED` | Too many failed logins for that email. Wait the number of seconds in the `Retry-After` header, or stop and restart the server (the counters live in memory) |
+| **1. Register** says the email already exists | You edited its body by hand. Put `{{email}}` back, since the request normally makes a new email each time |
+| `The database ... ` errors in the server window | See Part 3.9 |
+
+Every **Register** creates a harmless test account in your Atlas database `findit`. They are fake data, and you can delete them later in Atlas under **Browse Collections**.
 
 ---
 
@@ -285,8 +413,6 @@ On success you will see `Tests: 73 passed, 73 total`. This test database is crea
 
 | Part | Written in |
 |---|---|
-| 4. Create the first admin account | Stage 4 |
-| 5. Test the API with Postman | Stage 4–6 |
 | 6. Create and run the mobile app in Expo Go | Stage 7 |
 | 7. Connect your phone to the backend (finding your laptop's IP address, Wi-Fi and firewall troubleshooting) | Stage 8 |
 | 8. Set up Cloudinary | Stage 9 |

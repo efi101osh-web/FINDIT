@@ -113,13 +113,27 @@ describe('updateProfileSchema', () => {
   });
 
   test('refuses an empty update', () => {
-    expect(updateProfileSchema.safeParse({}).success).toBe(false);
+    const result = updateProfileSchema.safeParse({});
+    expect(result.success).toBe(false);
+    expect(result.error.issues[0].message).toBe('Send at least one field to change.');
+  });
+
+  test('a forbidden field is reported ONLY as that, not also as "send at least one field"', () => {
+    const result = updateProfileSchema.safeParse({ email: 'x@y.com' });
+    expect(result.success).toBe(false);
+    expect(issuesOf(result)).toEqual(['unrecognized_keys:']);
   });
 });
 
 describe('changePasswordSchema', () => {
   test('accepts a valid change', () => {
     expect(changePasswordSchema.safeParse({ currentPassword: 'Old12345', newPassword: 'New12345' }).success).toBe(true);
+  });
+
+  test('a weak new password is reported as weak, without a second misleading "must differ" message', () => {
+    const result = changePasswordSchema.safeParse({ currentPassword: 'short', newPassword: 'short' });
+    expect(result.success).toBe(false);
+    expect(result.error.issues.map((i) => i.message)).not.toContain('The new password must be different from the current one.');
   });
 
   test('refuses a weak new password, the same password, and extra fields', () => {

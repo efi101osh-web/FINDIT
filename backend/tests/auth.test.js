@@ -70,7 +70,7 @@ describeWithDatabase('registration', () => {
     expect(await User.countDocuments({ email })).toBe(1);
   });
 
-  test('five sign-ups with the same email at the SAME moment: exactly one wins (the database enforces uniqueness)', async () => {
+  test('T-AUTH-12: five sign-ups with the same email at the SAME moment: exactly one wins (the database enforces uniqueness)', async () => {
     const email = uniqueEmail('race');
     const results = await Promise.all(Array.from({ length: 5 }, () => registerViaApi(app, { email })));
     const statuses = results.map((r) => r.res.status).sort();
@@ -149,7 +149,7 @@ describeWithDatabase('login', () => {
     expect(wrongPassword.body.error.code).toBe('INVALID_CREDENTIALS');
   });
 
-  test('an unknown email still costs a full password check, so response time does not reveal which emails exist', async () => {
+  test('T-AUTH-14: an unknown email still costs a full password check, so response time does not reveal which emails exist', async () => {
     const { body } = await registerViaApi(app);
     const spy = jest.spyOn(bcrypt, 'compare');
     try {

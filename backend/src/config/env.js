@@ -96,6 +96,14 @@ function parseCorsOrigins(raw) {
 function parseJwtSecret(raw) {
   const secret = String(raw || '').trim();
   if (secret === '') return undefined;
+  // A real key (from `npm run make:secret`) is one unbroken run of letters and digits. Spaces or
+  // < > mean a placeholder such as "<paste the key here>" was left in, which would be a guessable "secret".
+  if (/[<>\s]/.test(secret)) {
+    throw new Error(
+      'Invalid JWT_SECRET. It contains spaces or < > characters, so a placeholder was probably left in. ' +
+        'Paste only the generated key, nothing else. Generate one with: npm run make:secret'
+    );
+  }
   if (secret.length < 32) {
     throw new Error(
       'Invalid JWT_SECRET. It is too short: use at least 32 characters. ' +

@@ -1,6 +1,6 @@
 # FINDIT: Test Plan
 
-> **Status:** The plan is written (88 backend cases). Automated tests began in Stage 2 and now number 73 Jest tests, covering 10 of the planned backend cases. Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+> **Status:** The plan is written (93 backend cases). Automated tests began in Stage 2 and now number 200 Jest tests (140 run by default, 60 need a real database), covering 32 of the planned backend cases (one, T-ADM-01, only against a stand-in route until Stage 12). Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
 
 ## 1. Strategy
 
@@ -32,7 +32,7 @@ Status for all: `Not run`.
 | T-INV-03 | Invalid JSON body | 400 in the standard error shape |
 | T-SEC-01 | Response headers | Security headers present (Helmet) |
 | T-SEC-02 | CORS from a non-allowed origin | Browser request blocked |
-| T-SEC-03 | 11 rapid login attempts | 429 `RATE_LIMITED` |
+| T-SEC-03 | Failed logins for one account beyond the limit (default 10 per 15 minutes) | 429 `RATE_LIMITED` with `Retry-After`. Correct logins never count. Other accounts on the same address are unaffected |
 | T-SEC-04 | Any 500 error | No stack trace or internals in the response |
 
 ### Database connection
@@ -55,11 +55,16 @@ Status for all: `Not run`.
 | T-AUTH-07 | Login to a suspended account | 403 `ACCOUNT_SUSPENDED` |
 | T-AUTH-08 | Protected route with no / malformed / expired token | 401 `UNAUTHENTICATED` |
 | T-AUTH-09 | Suspended user with a previously valid token | 403 on the next request |
-| T-AUTH-10 | Database holds a bcrypt hash, not the password | Verified by inspection |
+| T-AUTH-10 | The raw database document | Holds a bcrypt hash of the configured strength; never the password; a normal query never returns the hash |
+| T-AUTH-11 | Forged tokens: wrong key, "none" algorithm, other algorithm, wrong issuer, bad or missing subject, cut-off signature, a role written into the token | All 401, or the role in the token is ignored |
+| T-AUTH-12 | Five sign-ups for the same email at the same instant | Exactly one succeeds, four get 409; one account exists |
+| T-AUTH-13 | First-administrator seeding | Creates an admin who can log in; safe to repeat; never resets a password; promotes a regular account only with `--promote` |
+| T-AUTH-14 | Login with an unknown email | Still performs a full password check, so timing does not reveal which emails exist |
 | T-USR-01 | Update full name, phone, contact preference | 200, changes saved |
 | T-USR-02 | Try to change email / role / status via `PATCH /users/me` | 400 |
 | T-USR-03 | Change password with correct current password | 200, new password works, old does not |
 | T-USR-04 | Change password with wrong current password | 400 on `currentPassword` |
+| T-USR-05 | An existing token after a password change | Still works until it expires (documented accepted limitation, [SECURITY_PLAN.md](SECURITY_PLAN.md) section 4) |
 
 ### Items, browsing and search
 | ID | Case | Expected |
@@ -192,3 +197,6 @@ Real results only, with the date and where they were run.
 | 2026-11-23 | **Owner's laptop** (Windows, PowerShell, Node 24.20.0) + MongoDB Atlas (8.0.39) | Plain `npm test` after Stage 3; `npm run check:db`; `npm run dev` with the health page | ✅ `npm test`: 64 passed, 7 skipped, 0 failed. `check:db`: connected to Atlas. Health: `database: connected` | Reported by the owner. First verification against Atlas |
 | 2026-11-23 | **Owner's laptop** (Windows, Node 24.20.0), final Stage 3 commit `974844e` | Plain `npm test` (includes the doubled-label tests) | ✅ 66 passed, 7 skipped, 0 failed | Reported by the owner |
 | 2026-11-23 | Cloud container, real MongoDB 8.0.17 | Settings tests extended (doubled-label slip) | ✅ `test:db`: 73 of 73 pass. Plain `npm test`: 66 passed, 7 skipped | |
+| 2026-11-23 | Cloud container, real MongoDB 8.0.17 | Stage 4: T-AUTH-01 to T-AUTH-14, T-USR-01 to T-USR-05, T-SRC-06, T-SEC-03, T-ADM-01 (stand-in route), plus settings, validation, rate-limit and seeding tests | ✅ `test:db`: **200 of 200 pass**. Plain `npm test`: 140 passed, 60 skipped | **25 deliberate security bugs were each caught by the tests** (e.g. every sign-up becomes an admin, suspended check removed, algorithm not pinned, password stored in plain text). One gap found and closed (the settings-to-limiter link) |
+| 2026-11-23 | Cloud container, live server + real MongoDB, `curl` and Newman | Full journey: seed admin, sign-up, login, profile, password change, forged token, password guessing, lock-out | ✅ All as expected. Postman collection: 10 requests, 17 assertions, 0 failed. No passwords or secrets in the server log | See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) section 4 |
+| *(pending)* | **Owner's laptop** + Atlas | Setup guide Parts 4 and 5 | Needs laptop | Creates the real first admin in Atlas and runs the Postman collection |

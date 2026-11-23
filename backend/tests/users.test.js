@@ -118,7 +118,7 @@ describeWithDatabase('PATCH /users/me/password', () => {
     expect((await patch('/password', token, { currentPassword: PASSWORD, newPassword: 'Moonrise2027', role: 'admin' })).status).toBe(400);
   });
 
-  test('KNOWN LIMITATION (documented): an existing token keeps working after a password change until it expires', async () => {
+  test('T-USR-05: KNOWN LIMITATION (documented): an existing token keeps working after a password change until it expires', async () => {
     const { token } = await registerViaApi(app);
     await patch('/password', token, { currentPassword: PASSWORD, newPassword: 'Moonrise2027' });
     const res = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`);

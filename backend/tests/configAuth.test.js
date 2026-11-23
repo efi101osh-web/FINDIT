@@ -26,6 +26,17 @@ describe('JWT_SECRET (a secret)', () => {
     expect(message).not.toContain('short-secret-value');
   });
 
+  test('refuses a placeholder left in from the instructions (spaces or < > make it obviously not a real key)', () => {
+    for (const value of ['<paste the 96-character key here>', 'paste the generated key here and nothing else!', `${SECRET}<`, `${SECRET} extra`]) {
+      expect(() => loadConfig({ JWT_SECRET: value })).toThrow(/placeholder was probably left in/);
+    }
+  });
+
+  test('accepts the exact kind of key that npm run make:secret produces', () => {
+    const generated = require('crypto').randomBytes(48).toString('hex');
+    expect(loadConfig({ JWT_SECRET: generated }).jwtSecret).toBe(generated);
+  });
+
   test('refuses obvious placeholders even when long enough', () => {
     expect(() => loadConfig({ JWT_SECRET: 'changeme'.padEnd(40, 'x') })).toThrow(/placeholder/);
     expect(() => loadConfig({ JWT_SECRET: 'your-secret-goes-here-and-it-is-long' })).toThrow(/placeholder/);

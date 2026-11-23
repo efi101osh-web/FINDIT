@@ -1,6 +1,6 @@
 # FINDIT: API Contract
 
-> **Status: PLANNED. Only `GET /health` is implemented so far (complete, including the `database` field). Everything else below is design, not implemented.** Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
+> **Status: 7 of the 37 endpoints are implemented and tested: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me` and `PATCH /users/me/password`. Everything else below is design, not implemented.** Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
 
 The mobile app and the admin dashboard use **the same API** with the same rules.
 
@@ -92,10 +92,21 @@ All enumerations (categories, colours, locations, statuses, …) are defined in 
 
 | Scope | Limit |
 |---|---|
-| All endpoints, per IP | 300 requests / 15 minutes |
-| `POST /auth/register`, `POST /auth/login`, per IP | 10 requests / 15 minutes |
-| `POST /uploads/images`, per user | 20 / hour |
-| `POST /claims`, per user | 10 / day |
+| All endpoints, per IP address | 600 requests / 15 minutes *(implemented)* |
+| `POST /auth/login`, per IP address **and** email | 10 **failed** attempts / 15 minutes *(implemented)*. Correct logins are never counted. While locked out, even the correct password is refused, so guessing cannot continue |
+| `POST /auth/register`, per IP address | 20 requests / hour *(implemented)* |
+| `POST /uploads/images`, per user | 20 / hour *(later, Stage 9)* |
+| `POST /claims`, per user | 10 / day *(later, Stage 11)* |
+
+When a limit is exceeded the reply is `429 RATE_LIMITED` with a `Retry-After` header (seconds to wait). Replies also carry `RateLimit` headers that say how much budget is left. The numbers can be changed in `backend/.env` (`RATE_LIMIT_GLOBAL_MAX`, `RATE_LIMIT_LOGIN_FAILURES`, `RATE_LIMIT_REGISTER_MAX`).
+
+### 1.7 How login tokens work (as implemented)
+
+- A token is a signed JWT (algorithm **HS256**, issuer `findit-api`). It contains **only** the user's id, when it was issued and when it expires. It does **not** contain the role or the account status.
+- On **every** request the backend reloads the user from the database. So a suspension or role change applies at once, even though the person still holds an unexpired token.
+- The default lifetime is 7 days (`JWT_EXPIRES_IN`; at most 30 days, because a token cannot be revoked early).
+- Logout means the app deletes its copy of the token. There is no server-side logout, so a stolen unexpired token would still work (accepted limitation, [SECURITY_PLAN.md](SECURITY_PLAN.md) section 4).
+- Any change to a token, a token signed with another key or algorithm (including `none`), or a token for a deleted account is refused with `401 UNAUTHENTICATED`.
 
 ---
 
@@ -336,7 +347,7 @@ curl -X POST "$API/auth/register" -H "Content-Type: application/json" \
 - **Auth:** none.
 - **Request body:** `{ "email": "amina@example.com", "password": "Sunrise2026" }`
 - **Response `200`:** `data` = `{ "user": <User>, "token": "<jwt>", "expiresIn": "7d" }`
-- **Errors:** `400 VALIDATION_ERROR` · `401 INVALID_CREDENTIALS` (same message whether the email or the password is wrong) · `403 ACCOUNT_SUSPENDED` · `429 RATE_LIMITED`
+- **Errors:** `400 VALIDATION_ERROR` · `401 INVALID_CREDENTIALS` (same message, and about the same response time, whether the email or the password is wrong) · `403 ACCOUNT_SUSPENDED` (revealed **only after the correct password** was given) · `429 RATE_LIMITED` (too many failed attempts for this email from this address)
 - **Example:**
 
 ```bash
@@ -373,12 +384,11 @@ curl -X POST "$API/auth/login" -H "Content-Type: application/json" \
 {
   "fullName": "Amina B. Yusuf",
   "phoneNumber": "+2348099999999",
-  "contactPreference": "EMAIL",
-  "profileImage": { "url": "https://res.cloudinary.com/example-cloud/image/upload/findit/profiles/xyz.jpg", "publicId": "findit/profiles/xyz" }
+  "contactPreference": "EMAIL"
 }
 ```
 
-`phoneNumber` or `profileImage` may be `null` to clear them. `email`, `role`, `accountStatus`, `passwordHash` → `VALIDATION_ERROR`.
+`phoneNumber` may be `null` to clear it. At least one field is required. `email`, `role`, `accountStatus`, `passwordHash` (and any other field) → `VALIDATION_ERROR` ("This field is not accepted."), and **nothing** is changed, even if the same request also contained valid fields. **`profileImage` is not accepted yet**: it arrives with image upload in Stage 9.
 
 - **Response `200`:** `data` = `{ "user": <User> }`
 - **Errors:** `400 VALIDATION_ERROR`
@@ -395,7 +405,7 @@ curl -X PATCH "$API/users/me" -H "Authorization: Bearer $TOKEN" -H "Content-Type
 - **Auth:** required. **Role:** any.
 - **Request body:** `{ "currentPassword": "Sunrise2026", "newPassword": "Moonrise2027" }`
 - **Response `200`:** `data` = `{ "message": "Password updated." }`
-- **Errors:** `400 VALIDATION_ERROR` (new password too weak, **or** current password wrong. The wrong-current-password case is reported as a validation error on `currentPassword` so the app does not mistake it for an expired session)
+- **Errors:** `400 VALIDATION_ERROR` (new password too weak **or the same as the current one**, **or** current password wrong. The wrong-current-password case is reported as a validation error on `currentPassword` so the app does not mistake it for an expired session)
 - **Example:**
 
 ```bash
@@ -884,4 +894,5 @@ The numbers are an example of the shape only.
 
 | Date | Change |
 |---|---|
+| 2026-11-23 | Stage 4 implemented 6 endpoints (register, login, `/auth/me`, `/users/me`, profile update, password change). Changes from the design: rate limits redesigned (section 1.6: failed logins per address + email, register per address, general limit 600); section 1.7 added (token details); `profileImage` deferred to Stage 9; new password must differ from the current one |
 | 2026-11-22 | Initial design (Stage 1). 37 endpoints planned. Added beyond the original brief: `/health`, `/meta/options`, `PATCH /users/me/password`, `POST /uploads/images`, `GET /items/mine`, `POST /claims/:id/respond`, `PATCH /claims/:id/withdraw`, `GET /claims/mine`, `PATCH /notifications/read-all`, `PATCH /admin/items/:id/status`, `GET /admin/claims/:id`, `PATCH /admin/users/:id`, `GET /admin/audit-records`, `PATCH /admin/recovery-records/:id` |

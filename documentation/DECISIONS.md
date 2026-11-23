@@ -158,6 +158,34 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 **Decision:** The app connects as a dedicated Atlas user `findit_app` with the built-in role **Read and write to any database**, never as the Atlas Admin user that the quick setup creates automatically (which is deleted). Both the `mongodb+srv://` and the longer three-server `mongodb://` connection strings are supported (Atlas showed the second form to the owner). The role will be narrowed to the `findit` database only in the Stage 16 security review.
 **Why:** Least privilege: if the connection string ever leaks, the damage is limited. Atlas's quick setup creates an admin user and shows its password on screen, and the owner pasted a password into chat once. That password was rotated, and the guides now explain how to do this and to mask secrets when asking for help.
 
+## D-029: Authentication design (Stage 4)
+**Status:** Accepted
+**Decision:**
+- **Tokens:** JWT, HS256 pinned, issuer `findit-api`, containing only the user id. The user (role, status) is reloaded from the database on every request. Default lifetime 7 days, at most 30 (tokens cannot be revoked). No refresh tokens. Logout is the app deleting its token.
+- **Passwords:** `bcryptjs`, cost 12 by default (about 0.3 s on the build machine, probably 0.7 to 1 s on the owner's laptop), configurable from 4 to 15 and never below 10 in production; tests use 4. New passwords: 8 to 72 bytes with a letter and a number. Existing passwords are never trimmed or altered.
+- **Login:** the same reply for an unknown email and a wrong password, and an unknown email still pays for a full password check. A suspended account is only revealed after the correct password.
+- **Emails** are trimmed and lower-cased, and unique in the database. An optional `ALLOWED_EMAIL_DOMAINS` list can restrict sign-up to campus addresses.
+- **Roles:** public sign-up always creates `user`. The first administrator comes from `npm run seed:admin`, which never changes an existing account's password.
+**Why:** each choice closes a specific attack (forged tokens, stale permissions, account enumeration, timing leaks, self-made admins). See [SECURITY_PLAN.md](SECURITY_PLAN.md).
+**Accepted limitation:** a password change does not invalidate tokens already issued (they expire).
+
+## D-030: Rate limiting counts FAILED logins per address and email
+**Status:** Accepted (Stage 4). *Replaces the first design in the API contract (10 requests of any kind per address per 15 minutes).*
+**Finding:** the first design would have locked the owner out after about ten Postman clicks, and would lock a whole campus behind one shared address after ten logins. It also let a correct login use up the budget.
+**Decision:** three limiters, counted in memory: general (600 per address per 15 minutes); login (10 **failed** attempts per address **and** email per 15 minutes, correct logins never count, and the lock-out also refuses the correct password); sign-up (20 per address per hour). All are tunable in `.env`.
+**Why:** one account's guessers are slowed without punishing other people on the same Wi-Fi.
+**Consequences:** see accepted risks 10 to 12 in the security plan.
+
+## D-031: `req.valid` and strict schemas
+**Status:** Accepted (Stage 4)
+**Decision:** the validation checkpoint puts cleaned data in `req.valid.body` (never overwriting `req.body` or `req.query`, which are read-only in Express 5), and controllers read only that. Schemas are strict (unknown fields are refused), clean first and then check (`trim().toLowerCase().pipe(z.email())`: in Zod 4, `z.email().trim()` would check the format before trimming), and run "at least one field" or "must differ" checks only when nothing else is already wrong (`when`), so a forbidden field is not also reported as "send at least one field".
+**Profile photo:** `profileImage` is not accepted by `PATCH /users/me` until image upload exists (Stage 9), because a photo link must be checked against our own Cloudinary account.
+
+## D-032: Postman collection is the manual-test tool
+**Status:** Accepted (Stage 4)
+**Decision:** `documentation/postman/FINDIT.postman_collection.json` holds ready-made requests with built-in checks. Every stage that adds endpoints extends it. It was verified by running it with Newman (Postman's command-line runner) against a live server (10 requests, 17 checks, 0 failed; one optional admin request was added afterwards).
+**Why:** it lets the owner exercise and demonstrate the API with clicks, and it doubles as living documentation.
+
 ---
 
 ## How to add a decision

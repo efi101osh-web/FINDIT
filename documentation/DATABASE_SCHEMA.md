@@ -83,6 +83,13 @@ One document per account.
 - The JWT identifies a user by `_id` only. On every request the backend reloads the user, so a suspension or role change applies **immediately**.
 - Password rule: 8–72 characters (bcrypt ignores everything after 72 bytes, so we refuse longer passwords rather than silently truncating them), at least one letter and one number.
 
+**Implemented in Stage 4** (`backend/src/models/User.js`, verified against a real MongoDB):
+- The unique `email` index really enforces uniqueness, including when five sign-ups for the same email arrive at the same instant (exactly one wins).
+- `passwordHash` uses `select: false`: a normal query never returns it. The raw stored value is a 60-character bcrypt hash.
+- Roles are only `user` on public sign-up. `admin` accounts come from `npm run seed:admin` (or, from Stage 12, an administrator promoting someone).
+- `profileImage` exists in the model but cannot be set until Stage 9.
+- Indexes are built when the server starts (`initModels()`), before any request is accepted.
+
 ---
 
 ## 5. `items`

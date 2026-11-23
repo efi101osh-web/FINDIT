@@ -11,7 +11,12 @@ const updateProfileSchema = z
     phoneNumber: f.phoneNumber.nullable().optional(), // null clears it
     contactPreference: f.contactPreference.optional(),
   })
-  .refine((value) => Object.keys(value).length > 0, { error: 'Send at least one field to change.' });
+  // `when`: only run this check if nothing else is already wrong, so a forbidden field is
+  // reported as that, not also as "send at least one field".
+  .refine((value) => Object.keys(value).length > 0, {
+    error: 'Send at least one field to change.',
+    when: (payload) => payload.issues.length === 0,
+  });
 
 const changePasswordSchema = z
   .strictObject({
@@ -21,6 +26,7 @@ const changePasswordSchema = z
   .refine((value) => value.currentPassword !== value.newPassword, {
     path: ['newPassword'],
     error: 'The new password must be different from the current one.',
+    when: (payload) => payload.issues.length === 0,
   });
 
 module.exports = { updateProfileSchema, changePasswordSchema };

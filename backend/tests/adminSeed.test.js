@@ -70,6 +70,16 @@ describeWithDatabase('seedAdmin', () => {
     expect(await User.countDocuments({ email })).toBe(0);
   });
 
+  test('refuses placeholder text left over from the instructions, and creates nothing', async () => {
+    const email = uniqueEmail('placeholder');
+    await expect(
+      seedAdmin({ email, password: '<a strong password: 8 or more characters with at least one letter and one number>', passwords })
+    ).rejects.toThrow(/placeholder/);
+    await expect(seedAdmin({ email: '<the email you will log in with>', password: 'BossPass2026', passwords })).rejects.toThrow(/placeholder/);
+    await expect(seedAdmin({ email, password: 'BossPass2026', fullName: '<your name>', passwords })).rejects.toThrow(/placeholder/);
+    expect(await User.countDocuments({ email })).toBe(0);
+  });
+
   test('the error for a weak password does not repeat the password', async () => {
     let message = '';
     try {

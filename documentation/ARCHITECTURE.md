@@ -277,6 +277,13 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 - **Mobile** stores the token in `expo-secure-store`. **Dashboard** keeps it in `sessionStorage` (cleared when the tab closes). `localStorage` is avoided because it persists longer. This is a known trade-off for browser apps, noted in the security plan.
 - Login failures return one generic message and the login route is rate-limited.
 
+**As implemented in Stage 4**
+- Files: `models/User.js`; `services/passwordService.js` (bcrypt hashing, plus a dummy hash so that unknown emails cost the same time as wrong passwords), `tokenService.js`, `authService.js`, `userService.js`, `adminSeedService.js`; `middleware/authenticate.js` (verify token, reload user, refuse suspended accounts), `authorize.js` (role check), `validate.js`, `rateLimiters.js`; `validators/` (Zod); `utils/ApiError.js`, `respond.js`, `serializers.js`.
+- Services are built from the settings they need (`createServices(config)`), and the app from the config (`createApp(config)`), so tests can use their own isolated configuration.
+- Controllers read only `req.valid` (the cleaned, checked input), never the raw `req.body`.
+- Checks run in this order on login: rate limit, input shape, find the user, password, and only then the suspension check (so a guesser cannot learn that an account exists or is suspended).
+- The first administrator is created by `npm run seed:admin`, which reads the email and password from the owner's private `.env`.
+
 ---
 
 ## 11. Environment variables (names only; values never go in Git)
@@ -289,8 +296,10 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 | `PORT` | Default `4000` |
 | `MONGODB_URI` | Atlas connection string (secret) |
 | `MONGODB_DB_NAME` | Database name inside the cluster. Default `findit` |
-| `JWT_SECRET` | Long random string (secret) |
-| `JWT_EXPIRES_IN` | Default `7d` |
+| `JWT_SECRET` | Long random string, at least 32 characters (secret). Generate with `npm run make:secret` |
+| `JWT_EXPIRES_IN` | Default `7d`; at most `30d` |
+| `BCRYPT_ROUNDS` | Password hashing strength, 4 to 15. Default 12 (production refuses below 10) |
+| `RATE_LIMIT_GLOBAL_MAX`, `RATE_LIMIT_LOGIN_FAILURES`, `RATE_LIMIT_REGISTER_MAX` | Optional rate-limit tuning |
 | `CORS_ORIGINS` | Comma-separated list of allowed browser origins (the dashboard) |
 | `ALLOWED_EMAIL_DOMAINS` | Optional. Comma-separated campus domains. Empty means any |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Image storage (secrets) |

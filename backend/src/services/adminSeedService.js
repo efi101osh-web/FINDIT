@@ -13,7 +13,13 @@ const User = require('../models/User');
 const { ROLES } = require('../config/constants');
 const f = require('../validators/fields');
 
+// "<like this>": text from the example file that was never replaced.
+const looksLikePlaceholder = (value) => /^\s*<.*>\s*$/.test(String(value));
+
 function firstProblem(schema, value, label) {
+  if (looksLikePlaceholder(value)) {
+    throw new Error(`${label}: it still contains a placeholder in < >. Replace the whole thing, including the < and > signs.`);
+  }
   const result = schema.safeParse(value);
   if (!result.success) {
     throw new Error(`${label}: ${result.error.issues[0].message}`);

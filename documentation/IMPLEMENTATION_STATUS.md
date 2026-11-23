@@ -1,6 +1,4 @@
-# FINDIT: Implementation Status
-
-**Last updated:** 2026-11-23 (end of Stage 3)
+**Last updated:** 2026-11-23 (Stage 4 built; owner's laptop check pending)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -12,11 +10,11 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 3: Backend foundation and MongoDB connection |
-| **State** | ✅ Stages 1 to 3 complete and verified: in the cloud container against a real MongoDB 8.0.17, **and on the owner's Windows laptop against a real MongoDB Atlas free cluster** (server 8.0.39) |
-| **Next stage** | Stage 4: Authentication and user management |
-| **What works today** | The backend connects to MongoDB and answers `GET /api/v1/health` (including `database: connected`); sends security headers; enforces a CORS allow-list; explains database problems in plain English without ever showing the password; 73 automated tests pass (66 by default plus 7 that need a real database) |
-| **Everything else** | Planned only: database, accounts, items, claims, mobile app, dashboard |
+| **Current stage** | Stage 4: Authentication and user management |
+| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 200 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **Not yet run on the owner's laptop or against Atlas.** The owner's steps are [SETUP_GUIDE.md](SETUP_GUIDE.md) Parts 4 and 5. Stages 1 to 3 are fully verified |
+| **Next stage** | Stage 5: Lost and found item reporting (after the owner's check) |
+| **What works today** | Everything from Stage 3, plus: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
+| **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
 
 ## 2. Stages
 
@@ -25,7 +23,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
 | 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
-| 4 | Authentication and user management | ⬜ | |
+| 4 | Authentication and user management | ⚠️ | Verified in the container. **Owner's laptop and Atlas check pending** (setup guide Parts 4 and 5). Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
 | 5 | Lost and found item reporting | ⬜ | |
 | 6 | Browsing and search | ⬜ | |
 | 7 | Mobile app foundation and screens | ⬜ | Decision D-019 (Expo SDK) to be settled here |
@@ -47,22 +45,32 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **1**: `GET /health` (complete) | Container (real MongoDB) and owner's laptop (Atlas): `database: connected` |
-| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | 0 | 0 |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **7**: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password` | Container with a real MongoDB. On the owner's laptop and Atlas: `/health` only so far |
+| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **1**: `users` | Container (real MongoDB) |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **2 implemented** (S-15, S-16), **3 partial** (below) | Container (automated tests). Owner's laptop for the secrets-related ones |
-| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 88 | 10 covered by automated tests | Container (and owner's laptop for the non-database ones) |
-| Automated tests (Jest) | n/a | 73 (66 run by default, 7 need a real database) | `test:db`: 73 of 73 pass (container). Default `npm test`: 66 pass, 7 skipped (container). Owner's laptop (final Stage 3 commit `974844e`): 66 passed, 7 skipped, 0 failed |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **9 implemented** (S-01 to S-04, S-07, S-14, S-15, S-16, S-24), **7 partial** (below) | Container: automated tests plus deliberately planted bugs |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 93 | 32 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
+| Automated tests (Jest) | n/a | 200 (140 run by default, 60 need a real database) | `test:db`: 200 of 200 pass. Default `npm test`: 140 pass, 60 skipped (container). Owner's laptop: not yet run since Stage 3 |
+| Postman collection ([documentation/postman](postman)) | n/a | 11 requests, 19 checks | Run with Newman against a live server: 0 failed. Not yet run in the Postman app on the owner's laptop |
 
-**Implemented and tested in Stage 3:**
-- **S-15 Security headers:** Helmet's standard headers (content-type sniffing protection, framing protection, CSP, HSTS, referrer policy) on every response including errors; framework header removed.
-- **S-16 CORS allow-list:** only the listed websites are approved; `*` is refused in settings; no cookies cross-site; the mobile app, Postman and curl are unaffected.
+**Implemented and tested** (S-15 and S-16 in Stage 3; the rest in Stage 4):
+- **S-01 Password hashing:** `bcryptjs`, cost 12 by default (never below 10 in production). The raw database value is a 60-character bcrypt hash.
+- **S-02 Password policy:** 8 to 72 bytes with a letter and a number; a longer password is refused, never silently cut short.
+- **S-03 Token authentication:** HS256 pinned, issuer checked, key of at least 32 characters, placeholders and short keys refused. Forged, cut-off, "none"-algorithm, wrong-key and wrong-algorithm tokens are all refused.
+- **S-04 Fresh user lookup:** the token holds only the user id. Suspending an account or changing a role works on the very next request.
+- **S-07 No role at sign-up:** the role is never read from the request, and a sent `role` is refused outright.
+- **S-14 Rate limiting:** general, failed-login (per address and email) and sign-up limits, as described in D-030.
+- **S-24 Generic login errors:** identical replies for an unknown email and a wrong password; an unknown email still pays for a full password check (tested by counting the checks, not by timing).
+- **S-15 Security headers** and **S-16 CORS allow-list** (Stage 3).
 
 **Partially started** (none of these is complete):
+- **S-05 Role-based authorisation:** the `authorize` checkpoint is built and tested, but only against a stand-in route. The real admin routes arrive in Stage 12.
+- **S-08 Strict input validation** and **S-09 NoSQL-injection resistance:** done for sign-up, login and profile endpoints; each later endpoint adds its own.
 - **S-17 Request size limits:** JSON bodies over 100 kB are refused. Upload and pagination limits come later.
-- **S-19 Secrets management:** `.gitignore` and `.env.example` (tested with fake secrets); the server refuses to start without the database setting; the connection string cannot appear when the config is printed; error text is redacted. The push-time secret scan comes later.
-- **S-20 Safe error handling:** unexpected errors return a generic 500 with no detail. Validation, permission and conflict errors arrive from Stage 4.
+- **S-19 Secrets management:** `.gitignore` and `.env.example`; the server refuses to start without the database setting or the token key; secrets cannot appear when the config is printed; error text is redacted; placeholders left in the secret or seed password are refused. The push-time secret scan comes later.
+- **S-20 Safe error handling:** unexpected errors return a generic 500 with no detail; all known errors use the standard format.
+- **S-23 Account suspension:** enforced at login and on every request. The administrators' ability to suspend arrives in Stage 12.
 
 ## 4. Verification log
 
@@ -148,14 +156,43 @@ Environment (reported by the owner): Windows, PowerShell, Node v24.20.0; MongoDB
 - That the `findit_app` user's role is exactly "Read and write to any database" (owner-reported, not independently checked).
 - Atlas free-tier limits (about 512 MB storage) were not measured.
 
+### Stage 4 (accounts, login, roles, rate limiting), 2026-11-23
+Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.17. Installed: bcryptjs 3.0.3, jsonwebtoken 9.0.3, zod 4.6.7, express-rate-limit 8.7.5.
+
+| Check | Method | Result |
+|---|---|---|
+| All tests with a real database | `npm run test:db` | ✅ **200 of 200 pass** |
+| Plain `npm test` (as on the owner's laptop) | `npm test` | ✅ 140 pass, 60 skipped, 0 fail |
+| Tests can actually fail | 25 realistic security bugs planted one at a time (every sign-up becomes admin, strict validation loosened, suspended check removed, token algorithm not pinned, unknown email answered differently or without a password check, password hash in the response, unique email removed, login not rate limited, role check removed, passwords stored in plain text, current password not checked, profile accepts a role, validation skipped, suspension revealed to guessers, password hash always loaded, rate limit ignored, role trusted from the token, correct logins counted against the limit, login budget ignoring the email, sign-up not limited, placeholder secret accepted, placeholder admin password accepted, ...) | ✅ **All 25 caught.** One initially slipped through (the link from the settings to the limiter), so a test was added. The source was confirmed byte for byte identical after every batch |
+| Live end-to-end | Real server and real MongoDB, driven with `curl`: seed the admin through a real `.env` file, sign up, log in, who-am-I, profile change, password change, a hand-written "none" token, 11 wrong-password guesses | ✅ All as designed. The lock-out came after exactly 10 failures, refused even the correct password, and did not affect another account. At the default strength, sign-up took 0.35 s and login 0.30 s (the owner's laptop is likely 2 to 3 times slower) |
+| Postman collection | Newman against a live server, with a seeded admin | ✅ 11 requests, 19 checks, **0 failed** |
+| What is really stored | Read the raw database documents | ✅ `$2b$12$` hashes of 60 characters; the roles are right; no plain passwords |
+| No secrets in logs | Searched the server log for every password and the signing key | ✅ 0 occurrences |
+| Simultaneous duplicate sign-ups | Five identical sign-ups at the same instant | ✅ Exactly one account |
+| Dependency audit | `npm audit --omit=dev` | ✅ **0 vulnerabilities in the 106 production packages** (including the four new libraries) |
+
+**Problems found by this verification and fixed**
+1. **Rate-limit design flaw:** the first design counted every sign-up and login request (10 per address per 15 minutes). It would have locked out the owner after about ten Postman clicks, and a whole campus behind one shared address after ten logins. Redesigned to count only **failed** logins per address and email (D-030).
+2. **Zod 4 checks the format before trimming:** an email with stray spaces would have been wrongly refused, and a 300-character email passed. Fixed (D-031).
+3. **Misleading message:** a profile update containing the forbidden field `email` also said "Send at least one field to change". Fixed.
+4. **Placeholder text accepted as a secret:** a forgotten `<paste the key here>` would have become the token-signing key, and a forgotten placeholder could have become the admin password. Both are now refused.
+5. **Test gap:** the deliberate-bug check revealed that nothing proved the rate limits in `.env` were used. A test was added.
+
+**Not verified in Stage 4**
+- **The owner's laptop and MongoDB Atlas:** creating the real first administrator and running the Postman collection there (setup guide Parts 4 and 5). Nothing from the container can reach Atlas.
+- **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12).
+- **The Postman app on Windows** (the collection was run with Newman, Postman's command-line runner).
+- **Fresh download from GitHub after the Stage 4 push:** *pending, recorded below once done.*
+
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
 |---|---|---|
+| **Owner action** | Create the first administrator and try the Postman collection ([SETUP_GUIDE.md](SETUP_GUIDE.md) Parts 4 and 5). This is what fully verifies Stage 4 | Before Stage 5 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
-| Audit | 18 moderate advisories in Jest's dev-only dependency chain | Stage 16 |
-
-*D-018 (test database) was settled in Stage 3. The Atlas database user will be narrowed from "read and write to any database" to the `findit` database only in the Stage 16 security review.*
+| Audit | 18 moderate advisories in Jest's dev-only dependency chain (production dependencies: 0) | Stage 16 |
+| Risks 10 to 12 | Rate-limit counters in memory; no per-account lock-out across addresses; hosting behind a proxy needs `trust proxy` ([SECURITY_PLAN.md](SECURITY_PLAN.md) section 4) | Stages 16 and 17 |
+| Atlas user | Narrow the `findit_app` role from "read and write to any database" to the `findit` database only | Stage 16 |
 
 ## 6. What exists in the repository
 
@@ -164,18 +201,18 @@ CLAUDE.md                       Standing instructions for the AI assistant (carr
 README.md, .gitignore
 backend/
   package.json, package-lock.json, .env.example, .gitignore, README.md
-  src/config/env.js             Settings loader: validates, never reads files itself
-  src/config/db.js              MongoDB connection, state, redaction, plain-English errors
-  src/controllers/healthController.js
-  src/routes/index.js, healthRoutes.js
-  src/middleware/cors.js, notFound.js, errorHandler.js
-  src/app.js                    createApp(config): Helmet, CORS, JSON, routes, errors
-  src/server.js                 settings -> database -> web server -> clean shutdown
-  scripts/checkDatabase.js      npm run check:db   (read-only Atlas check)
-  scripts/testWithDatabase.js   npm run test:db    (all tests with a real throwaway MongoDB)
-  tests/                        health, config, security, dbErrors, database, databaseAuth (+ setup/ and helpers/)  (73 tests)
-  (empty placeholders: src/models, services, validators, utils)
-documentation/                  All documents, updated for Stage 3
+  src/config/                   env.js (validated settings; secrets hidden), db.js, constants.js
+  src/models/                   User.js, index.js (initModels)
+  src/validators/               fields.js, authValidators.js, userValidators.js (Zod, strict)
+  src/middleware/               authenticate, authorize, validate, rateLimiters, cors, notFound, errorHandler
+  src/services/                 passwordService, tokenService, authService, userService, adminSeedService, index
+  src/controllers/, src/routes/ health, auth, users
+  src/utils/                    ApiError, respond, serializers
+  src/app.js, src/server.js
+  scripts/                      checkDatabase, testWithDatabase, generateSecret, seedAdmin
+  tests/                        200 tests (+ setup/ and helpers/)
+documentation/                  All documents, updated for Stage 4
+documentation/postman/          FINDIT.postman_collection.json (11 requests, 19 checks)
 ```
 
 `mobile-app/` and `admin-dashboard/` do not exist yet. They are created by their own tools in Stages 7 and 12.

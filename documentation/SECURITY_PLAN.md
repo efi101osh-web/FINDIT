@@ -1,6 +1,6 @@
 # FINDIT: Security Plan
 
-> **Status: PLAN. Two controls are implemented and tested (S-15, S-16). Three are partly started (marked `Partial`). The rest are `Planned`.** Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
+> **Status: 9 controls are implemented and tested (S-01 to S-04, S-07, S-14, S-15, S-16, S-24). 7 are partly started (marked `Partial`). The rest are `Planned`.** Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
 
 ## 1. What we are protecting
 
@@ -19,20 +19,20 @@
 
 | # | Control | Threat it addresses | How | Stage | Status |
 |---|---|---|---|---|---|
-| S-01 | Password hashing | Stolen database exposes passwords | bcrypt (`bcryptjs`), cost factor 12, never log or return hashes | 4 | Planned |
-| S-02 | Password policy | Weak passwords; bcrypt's 72-byte limit | 8–72 characters, a letter and a number | 4 | Planned |
-| S-03 | JWT authentication | Anonymous access | Signed token; secret from `.env` (at least 32 random bytes); expiry set | 4 | Planned |
-| S-04 | Fresh user lookup per request | A suspended or demoted user keeps access | Token holds only the user ID; user reloaded each request | 4 | Planned |
-| S-05 | Role-based authorisation | Privilege escalation | `authorize(...roles)` middleware on every protected route | 4, 12 | Planned |
+| S-01 | Password hashing | Stolen database exposes passwords | bcrypt (`bcryptjs`), cost factor 12, never log or return hashes | 4 | Implemented (Stage 4) |
+| S-02 | Password policy | Weak passwords; bcrypt's 72-byte limit | 8–72 characters, a letter and a number | 4 | Implemented (Stage 4) |
+| S-03 | JWT authentication | Anonymous access | Signed token; secret from `.env` (at least 32 random bytes); expiry set | 4 | Implemented (Stage 4) |
+| S-04 | Fresh user lookup per request | A suspended or demoted user keeps access | Token holds only the user ID; user reloaded each request | 4 | Implemented (Stage 4) |
+| S-05 | Role-based authorisation | Privilege escalation | `authorize(...roles)` middleware on every protected route | 4, 12 | Partial (Stage 4: middleware done and tested; admin routes arrive in Stage 12) |
 | S-06 | Ownership checks | Reading or changing someone else's data | Checked in services (own item, own claim, own notification, assigned recovery) | 5, 11, 13, 14 | Planned |
-| S-07 | No role in public registration | Self-made admin | Role is never read from the request. Strict schema rejects it. Admins come from seed script or an admin promoting a user | 4 | Planned |
-| S-08 | Strict input validation | Bad data, injection | Zod schemas on body, query and params. Unknown fields rejected. Length and enum limits | 4 on | Planned |
-| S-09 | NoSQL-injection resistance | Operators like `{"$gt": ""}` smuggled into queries | Validation only allows plain strings and known types. Queries are built from validated values, never from raw `req.body`/`req.query` | 4 on | Planned |
+| S-07 | No role in public registration | Self-made admin | Role is never read from the request. Strict schema rejects it. Admins come from seed script or an admin promoting a user | 4 | Implemented (Stage 4) |
+| S-08 | Strict input validation | Bad data, injection | Zod schemas on body, query and params. Unknown fields rejected. Length and enum limits | 4 on | Partial (Stage 4: sign-up, login and profile endpoints; every later endpoint adds its own) |
+| S-09 | NoSQL-injection resistance | Operators like `{"$gt": ""}` smuggled into queries | Validation only allows plain strings and known types. Queries are built from validated values, never from raw `req.body`/`req.query` | 4 on | Partial (Stage 4: sign-up, login and profile endpoints) |
 | S-10 | Safe keyword search | Regex injection and slow patterns | User search text is **escaped** before use in a regex; length limited to 60 | 6 | Planned |
 | S-11 | Private fields never public | Data leaks | `select: false` on private fields **plus** whitelist serializers. Tests assert private fields are absent from public responses | 5, 11 | Planned |
 | S-12 | Mass-assignment protection | Client sets `status`, `reporterId`, etc. | Update schemas whitelist editable fields. Status only changes via `statusRules.js` | 5 | Planned |
 | S-13 | Status state machine | Illegal workflow jumps (e.g. skipping verification) | Single file of allowed transitions; others return 409 | 5, 11 | Planned |
-| S-14 | Rate limiting | Password guessing, spam, floods | Limits in [API_CONTRACT.md](API_CONTRACT.md#16-initial-rate-limits-tunable) | 4 on | Planned |
+| S-14 | Rate limiting | Password guessing, spam, floods | Limits in [API_CONTRACT.md](API_CONTRACT.md#16-initial-rate-limits-tunable) | 4 on | Implemented (Stage 4) |
 | S-15 | Security headers | Common browser attacks | Helmet | 3 | Implemented (Stage 3) |
 | S-16 | CORS allow-list | Other websites calling the API from a browser | Only origins listed in `CORS_ORIGINS` | 3 | Implemented (Stage 3) |
 | S-17 | Request size limits | Memory exhaustion | JSON body limit; upload 5 MB; `limit` max 50 | 3, 9 | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
@@ -41,8 +41,8 @@
 | S-20 | Safe error handling | Information leaks | One error handler. Clients get a code and message, never a stack trace or query | 3 | Partial (Stage 2, see IMPLEMENTATION_STATUS) |
 | S-21 | Audit records | Unaccountable staff actions | Append-only log of admin actions, including each viewing of private evidence | 12–16 | Planned |
 | S-22 | Conflict-of-interest rule | Staff approving their own claims | Staff accounts cannot submit claims | 11 | Planned |
-| S-23 | Account suspension | Abusive users | `accountStatus`, checked on login and on every request | 4, 12 | Planned |
-| S-24 | Generic login errors | Account enumeration at login | Same message and a similar response time for unknown email and wrong password | 4 | Planned |
+| S-23 | Account suspension | Abusive users | `accountStatus`, checked on login and on every request | 4, 12 | Partial (Stage 4: enforced at login and on every request; administrators can suspend from Stage 12) |
+| S-24 | Generic login errors | Account enumeration at login | Same message and a similar response time for unknown email and wrong password | 4 | Implemented (Stage 4) |
 | S-25 | Dependency hygiene | Vulnerable packages | `npm audit` reviewed at Stage 16 and before the demo; lock files committed | 16 | Planned |
 | S-26 | No personal data in logs | Privacy | Logs record request IDs and outcomes, never passwords, tokens, evidence or contact details | 3 on | Planned |
 | S-27 | Dashboard hardening | XSS in the web dashboard | React escapes output by default; no raw HTML injection; `sessionStorage` for the token | 12 | Planned |
@@ -75,6 +75,10 @@ These are deliberate trade-offs. They will be repeated honestly in the final doc
 7. **No email verification, no two-factor authentication, no email password-reset** in the first version. These are outside the brief.
 8. **Free-tier infrastructure** has no uptime guarantee and limited capacity.
 9. **Evidence retention** is not automated. A retention policy is decided in Stage 16.
+10. **Rate-limit counters live in memory.** They reset when the server restarts, and only work for a single server process.
+11. **No per-account lock-out across addresses.** Login attempts are limited per address and email together, so one student's typos never lock out others on the same Wi-Fi. A guesser who uses many different addresses against one account is slowed only by the password policy and the cost of bcrypt. A true per-account lock-out would let anyone lock out a victim, so it is not used. Revisited in Stage 16.
+12. **Behind a hosting proxy the server must be told to trust it.** Otherwise every user appears to come from the proxy's one address and shares the same limits. To be configured when hosting (Stage 17).
+13. **Passwords are limited to 72 bytes** (a bcrypt limit), and the limit is enforced, not silently applied.
 
 ## 5. Rules for working on this project
 

@@ -12,15 +12,16 @@ FINDIT is a connected system that helps campus users report lost and found items
 
 ## Current status
 
-**Stages 1 to 3 of 20 are complete. Next: Stage 4, accounts and login.**
+**Stages 1 to 3 of 20 are complete and verified. Stage 4 (accounts and login) is built and tested; the check on the owner's laptop is pending.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).
 - Security headers and a CORS allow-list are in place.
 - Unknown URLs and malformed requests get clean, standard JSON error replies.
 - Bad settings and database problems stop the server with a plain-English explanation, never showing the password.
-- 73 automated tests pass (7 of them need a real database; see the setup guide).
+- 200 automated tests pass (60 of them need a real database; see the setup guide).
 - The connection to a real **MongoDB Atlas** cluster has been verified from the owner's laptop.
+- **Accounts and login (Stage 4):** sign-up, login, profile and password change; login tokens; roles (nobody can make themselves an administrator); a safe script for the first administrator; password-guessing protection. A Postman collection in `documentation/postman` lets you try it by clicking.
 
 Everything else (database, accounts, items, claims, the apps) is **planned, not built**. The honest, always-current record is [documentation/IMPLEMENTATION_STATUS.md](documentation/IMPLEMENTATION_STATUS.md).
 
@@ -48,7 +49,7 @@ npm run check:db
 npm run dev
 ```
 
-Then open <http://localhost:4000/api/v1/health>. You should see `"database":"connected"`.
+Then open <http://localhost:4000/api/v1/health>. You should see `"database":"connected"`. Part 4 of the guide creates your first administrator, and Part 5 tries the API with Postman.
 
 Run the tests with `npm test`.
 
