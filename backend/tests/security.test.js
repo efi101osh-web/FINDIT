@@ -4,13 +4,10 @@
 // Test IDs refer to documentation/TEST_PLAN.md.
 
 const request = require('supertest');
-const { createApp } = require('../src/app');
-const { loadConfig } = require('../src/config/env');
+const { makeTestApp } = require('./helpers/testConfig');
 
 const ALLOWED = 'https://dash.example.com';
-const app = createApp(
-  loadConfig({ NODE_ENV: 'test', CORS_ORIGINS: `${ALLOWED}, http://localhost:5173/` })
-);
+const app = makeTestApp({ CORS_ORIGINS: `${ALLOWED}, http://localhost:5173/` });
 
 describe('security headers (Helmet)', () => {
   test('T-SEC-01: every response carries the standard browser-protection headers', async () => {

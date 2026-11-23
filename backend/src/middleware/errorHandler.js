@@ -7,12 +7,15 @@
 // Express recognises an error handler by it having exactly four parameters,
 // so `next` must stay in the signature even though it is rarely used.
 //
-// Handles the errors that can already happen (bad JSON, oversized body,
-// unexpected failures). Validation, permission and conflict errors are added
-// from Stage 4 with a shared ApiError class.
+// Handles: errors we throw on purpose (ApiError: validation, login, permission,
+// conflict...), bad JSON, oversized bodies, and unexpected failures.
 
-function send(res, status, code, message) {
-  res.status(status).json({ success: false, error: { code, message } });
+const ApiError = require('../utils/ApiError');
+
+function send(res, status, code, message, details) {
+  const error = { code, message };
+  if (details) error.details = details;
+  res.status(status).json({ success: false, error });
 }
 
 /** Builds the handler. `config.isTest` silences error logging during automated tests. */
@@ -22,6 +25,11 @@ function createErrorHandler(config) {
     // If the response has already started, the only safe option is to let Express close it.
     if (res.headersSent) {
       return next(err);
+    }
+
+    // Errors we throw on purpose; their message is written to be shown to users.
+    if (err instanceof ApiError) {
+      return send(res, err.status, err.code, err.message, err.details);
     }
 
     // Errors raised by Express's JSON body reader.

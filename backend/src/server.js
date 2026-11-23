@@ -12,6 +12,7 @@ const {
   attachConnectionLogging,
   describeConnectionError,
 } = require('./config/db');
+const { initModels } = require('./models');
 const { createApp } = require('./app');
 
 function stopWithMessage(lines) {
@@ -39,12 +40,22 @@ async function main() {
     ]);
   }
 
+  if (!config.jwtSecret) {
+    return stopWithMessage([
+      'Settings problem: JWT_SECRET is not set.',
+      'It is the secret key that signs login tokens. Generate one with: npm run make:secret',
+      'then put it in backend/.env as JWT_SECRET=... and start the server again.',
+    ]);
+  }
+
   // 2. Database.
   try {
     await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName });
   } catch (err) {
     return stopWithMessage([describeConnectionError(err, config.mongodbUri)]);
   }
+  // Wait until the database has built its indexes (the "unique email" rule depends on one).
+  await initModels();
   const detachConnectionLogging = attachConnectionLogging();
   console.log(`Connected to MongoDB (database "${config.dbName}").`);
 

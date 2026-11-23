@@ -4,8 +4,7 @@
 // Run them with `npm run test:db` (see documentation/SETUP_GUIDE.md).
 
 const request = require('supertest');
-const { createApp } = require('../src/app');
-const { loadConfig } = require('../src/config/env');
+const { makeTestApp } = require('./helpers/testConfig');
 const { getDatabaseState, inspectDatabase, disconnectDatabase } = require('../src/config/db');
 const mongoose = require('mongoose');
 const {
@@ -14,7 +13,7 @@ const {
   cleanUpTestDatabase,
 } = require('./helpers/database');
 
-const app = createApp(loadConfig({ NODE_ENV: 'test' }));
+const app = makeTestApp();
 
 describeWithDatabase('real MongoDB connection', () => {
   let dbName;

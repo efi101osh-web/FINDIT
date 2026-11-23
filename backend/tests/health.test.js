@@ -6,12 +6,11 @@
 
 const request = require('supertest');
 const express = require('express');
-const { createApp } = require('../src/app');
-const { loadConfig } = require('../src/config/env');
 const createErrorHandler = require('../src/middleware/errorHandler');
+const { makeTestConfig, makeTestApp } = require('./helpers/testConfig');
 
-const testConfig = loadConfig({ NODE_ENV: 'test' });
-const app = createApp(testConfig);
+const testConfig = makeTestConfig();
+const app = makeTestApp();
 
 describe('GET /api/v1/health', () => {
   test('T-HLT-01: responds 200 in the standard success format', async () => {

@@ -4,6 +4,7 @@
 
 const mongoose = require('mongoose');
 const { connectDatabase, disconnectDatabase } = require('../../src/config/db');
+const { initModels } = require('../../src/models');
 
 // Use `describeWithDatabase` instead of `describe` for tests that need MongoDB.
 // With plain `npm test` they show up in the results as "skipped" (never "passed").
@@ -30,6 +31,7 @@ async function connectTestDatabase() {
     serverSelectionTimeoutMS: 5000,
     driverOptions: TEST_DRIVER_OPTIONS,
   });
+  await initModels(); // build the indexes (e.g. the unique email) before any test runs
   return dbName;
 }
 
