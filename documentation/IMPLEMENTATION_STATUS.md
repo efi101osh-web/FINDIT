@@ -53,7 +53,7 @@ This file is the **single source of truth for what actually exists and has been 
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
 | Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **2 implemented** (S-15, S-16), **3 partial** (below) | Container (automated tests). Owner's laptop for the secrets-related ones |
 | Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 88 | 10 covered by automated tests | Container (and owner's laptop for the non-database ones) |
-| Automated tests (Jest) | n/a | 73 (66 run by default, 7 need a real database) | `test:db`: 73 of 73 pass (container). Default `npm test`: 66 pass, 7 skipped (container). Owner's laptop ran 64 passed, 7 skipped on the previous commit (the 2 newest tests were added after) |
+| Automated tests (Jest) | n/a | 73 (66 run by default, 7 need a real database) | `test:db`: 73 of 73 pass (container). Default `npm test`: 66 pass, 7 skipped (container). Owner's laptop (final Stage 3 commit `974844e`): 66 passed, 7 skipped, 0 failed |
 
 **Implemented and tested in Stage 3:**
 - **S-15 Security headers:** Helmet's standard headers (content-type sniffing protection, framing protection, CSP, HSTS, referrer policy) on every response including errors; framework header removed.
@@ -136,6 +136,7 @@ Environment (reported by the owner): Windows, PowerShell, Node v24.20.0; MongoDB
 | `npm run check:db` against Atlas | ✅ **SUCCESS**: database `findit`, server 8.0.39, address `ac-...-shard-00-00...mongodb.net`. Confirms Mongoose 9 / driver 7.8 against a real Atlas cluster, and the credentials, the IP allow-list and the connection-string format (the three-server `mongodb://` form that Atlas offered) |
 | `npm run dev` + health page | ✅ `{"success":true,"data":{"status":"ok","database":"connected",...}}` |
 | Atlas security setup | ✅ Owner reports: leaked Atlas Admin user deleted; the app uses a limited `findit_app` user |
+| Update to the final Stage 3 commit (`974844e`) | ✅ `git pull` fast-forwarded with no conflict (the `package-lock.json` problem did not recur); `npm ci` added 411 packages; `npm test`: 4 suites passed, 2 skipped, **66 passed, 7 skipped, 0 failed** (12 s) |
 
 **Problems met during the owner's setup, and what changed**
 1. **`git pull` blocked by `package-lock.json`:** `npm install` on the laptop rewrote it (cause not reproduced in the container; most likely a newer npm). Fix: `git restore package-lock.json`. Prevention: the guides now use `npm ci`, which never rewrites the lock file.
@@ -143,7 +144,7 @@ Environment (reported by the owner): Windows, PowerShell, Node v24.20.0; MongoDB
 3. **`MONGODB_URI=MONGODB_URI=...`** (label pasted twice) gave a generic error. The program now recognises this slip and says exactly what to delete (new tests added).
 
 **Not verified in Stage 3**
-- `npm run test:db` on Windows (optional; about 760 MB one-time download). The owner's laptop has not re-run the two newest tests.
+- `npm run test:db` on Windows (optional; about 760 MB one-time download).
 - That the `findit_app` user's role is exactly "Read and write to any database" (owner-reported, not independently checked).
 - Atlas free-tier limits (about 512 MB storage) were not measured.
 
