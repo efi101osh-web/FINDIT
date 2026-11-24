@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-24 (Stage 4 built; owner's laptop check partly done, paused on a network problem)
+**Last updated:** 2026-11-24 (Stage 4 built; owner's laptop check partly done, working through a network problem)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -11,7 +11,7 @@ This file is the **single source of truth for what actually exists and has been 
 | | |
 |---|---|
 | **Current stage** | Stage 4: Authentication and user management |
-| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 200 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **On the owner's laptop so far:** the 140 default tests pass, and the first administrator was created in the real Atlas database. **Still pending:** starting the server against Atlas and running the Postman collection, because the owner's current mobile (MiFi) network could not reach Atlas afterwards (see section 5). Stages 1 to 3 are fully verified |
+| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 208 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **On the owner's laptop so far:** the 140 default tests pass, and the first administrator was created in the real Atlas database. **Still pending:** starting the server against Atlas and running the Postman collection, because the owner's current mobile (MiFi) network could not reach Atlas afterwards (see section 5). Stages 1 to 3 are fully verified |
 | **Next stage** | Stage 5: Lost and found item reporting (after the owner's check) |
 | **What works today** | Everything from Stage 3, plus: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
@@ -51,7 +51,7 @@ This file is the **single source of truth for what actually exists and has been 
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
 | Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **9 implemented** (S-01 to S-04, S-07, S-14, S-15, S-16, S-24), **7 partial** (below) | Container: automated tests plus deliberately planted bugs |
 | Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 93 | 32 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
-| Automated tests (Jest) | n/a | 200 (140 run by default, 60 need a real database) | `test:db`: 200 of 200 pass. Default `npm test`: 140 pass, 60 skipped (container). Owner's laptop: not yet run since Stage 3 |
+| Automated tests (Jest) | n/a | 208 (148 run by default, 60 need a real database) | `test:db`: 208 of 208 pass. Default `npm test`: 148 pass, 60 skipped (container). Owner's laptop: not yet run since Stage 3 |
 | Postman collection ([documentation/postman](postman)) | n/a | 11 requests, 19 checks | Run with Newman against a live server: 0 failed. Not yet run in the Postman app on the owner's laptop |
 
 **Implemented and tested** (S-15 and S-16 in Stage 3; the rest in Stage 4):
@@ -190,6 +190,8 @@ Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, MongoDB 
 | Postman collection imported | ✅ Import Complete; all 11 requests are present (owner's screenshot) |
 | Starting the server and running the Postman requests | ⏸ **Not completed.** After the owner changed location and network (a phone hotspot earlier, then an MTN MiFi), the server and `npm run check:db` could not reach Atlas: *"The database did not answer in time"*. Cause not yet confirmed (see section 5) |
 
+**Added on 2026-11-24 in response to the network problem:** a `MONGODB_TIMEOUT_MS` setting (default 10 seconds, 1 to 120 seconds allowed) so a slow mobile connection can be given longer to reach Atlas, and a hint in the timeout message pointing to it. Verified in the container: 208 of 208 tests pass, and the setting measurably changes how long `check:db` waits (1.5 s setting gave up after 1.7 s; 4 s after 4.2 s). Not yet tried on the owner's network.
+
 **Not verified in Stage 4**
 - **Starting the server against Atlas and running the Postman requests on the owner's laptop** (setup guide Part 5). Blocked by the network problem above, not by the code: the same code passed every test and the live run in the container.
 - **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12).
@@ -222,7 +224,7 @@ backend/
   src/utils/                    ApiError, respond, serializers
   src/app.js, src/server.js
   scripts/                      checkDatabase, testWithDatabase, generateSecret, seedAdmin
-  tests/                        200 tests (+ setup/ and helpers/)
+  tests/                        208 tests (+ setup/ and helpers/)
 documentation/                  All documents, updated for Stage 4
 documentation/postman/          FINDIT.postman_collection.json (11 requests, 19 checks)
 ```

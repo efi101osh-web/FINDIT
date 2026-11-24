@@ -112,6 +112,22 @@ describe('loadConfig: MONGODB_DB_NAME', () => {
   });
 });
 
+describe('loadConfig: MONGODB_TIMEOUT_MS', () => {
+  test('defaults to 10 seconds', () => {
+    expect(loadConfig({}).dbTimeoutMs).toBe(10000);
+    expect(loadConfig({ MONGODB_TIMEOUT_MS: '  ' }).dbTimeoutMs).toBe(10000);
+  });
+
+  test('can be raised for slow networks', () => {
+    expect(loadConfig({ MONGODB_TIMEOUT_MS: '30000' }).dbTimeoutMs).toBe(30000);
+    expect(loadConfig({ MONGODB_TIMEOUT_MS: ' 120000 ' }).dbTimeoutMs).toBe(120000);
+  });
+
+  test.each(['999', '120001', 'abc', '10.5', '-1', '30s'])('refuses "%s"', (v) => {
+    expect(() => loadConfig({ MONGODB_TIMEOUT_MS: v })).toThrow(/MONGODB_TIMEOUT_MS/);
+  });
+});
+
 describe('loadConfig: CORS_ORIGINS', () => {
   test('parses a comma-separated list, trims, lower-cases and drops one trailing slash', () => {
     const cfg = loadConfig({ CORS_ORIGINS: ' https://Dash.Example.com/ , http://localhost:5173,, ' });

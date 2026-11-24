@@ -296,6 +296,7 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 | `PORT` | Default `4000` |
 | `MONGODB_URI` | Atlas connection string (secret) |
 | `MONGODB_DB_NAME` | Database name inside the cluster. Default `findit` |
+| `MONGODB_TIMEOUT_MS` | How long to wait when connecting to the database. Default `10000`; raise to `30000` on slow or mobile connections |
 | `JWT_SECRET` | Long random string, at least 32 characters (secret). Generate with `npm run make:secret` |
 | `JWT_EXPIRES_IN` | Default `7d`; at most `30d` |
 | `BCRYPT_ROUNDS` | Password hashing strength, 4 to 15. Default 12 (production refuses below 10) |

@@ -38,6 +38,7 @@ Stop the server with **Ctrl+C**.
 | `PORT` | `4000` | Port the API listens on |
 | `MONGODB_URI` | *(required)* | Atlas connection string. **A secret** (it contains the database password) |
 | `MONGODB_DB_NAME` | `findit` | Database name inside the cluster |
+| `MONGODB_TIMEOUT_MS` | `10000` | How long to wait when connecting to the database (milliseconds). Try `30000` on a slow or mobile connection |
 | `CORS_ORIGINS` | `http://localhost:5173` | Websites allowed to call the API from a browser (comma-separated, no `*`) |
 | `JWT_SECRET` | *(required)* | Key that signs login tokens. **A secret.** At least 32 characters; make one with `npm run make:secret` |
 | `JWT_EXPIRES_IN` | `7d` | How long a login lasts (`15m`, `12h`, `7d`; at most `30d`) |

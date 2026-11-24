@@ -134,6 +134,7 @@ function describeConnectionError(err, uri) {
     checks = [
       'MOST COMMON: in Atlas, open Network Access and make sure your current IP address is on the list.',
       'Check your internet connection (a VPN or a strict firewall can block it).',
+      'On a slow or mobile connection, give it longer: add MONGODB_TIMEOUT_MS=30000 to backend/.env and try again.',
       'Check your Atlas cluster is running and not paused.',
     ];
   } else {

@@ -105,7 +105,7 @@ npm test
 [tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
 
 Test Suites: 7 skipped, 7 passed, 7 of 14 total
-Tests:       60 skipped, 140 passed, 200 total
+Tests:       60 skipped, 148 passed, 208 total
 ```
 
 The **60 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
@@ -265,7 +265,7 @@ The program explains problems in plain words. The common ones:
 | `Invalid MONGODB_URI. It must start with ...` | Something comes before `mongodb`. Run the 20-character check in 3.6 to see the start of the line, and remove whatever precedes `mongodb` |
 | `MONGODB_URI still contains a placeholder` | You left `<db_username>` or `<db_password>` in. Replace the whole placeholder including the `<` `>` |
 | `The database rejected the username or password` | Wrong username or password, or the password has special characters. In Atlas → Database Access, edit the user and set a new letters-and-digits password. Update `.env` |
-| `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4 (on mobile data or a MiFi choose *Allow access from anywhere*, and wait until it shows Active). Also check your internet, a VPN, and that the cluster is not paused. To test whether your network can reach Atlas at all, run `Test-NetConnection <the first server name after the @ in your connection string> -Port 27017` and look for `TcpTestSucceeded : True`. If it says `False`, this network blocks the database port: try another network (home or campus Wi-Fi, or a phone hotspot that worked before). The long "IP whitelist" sentence in the message is printed for any timeout, so it does not prove the address is the cause |
+| `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4 (on mobile data or a MiFi choose *Allow access from anywhere*, and wait until it shows Active). **On a slow or mobile connection, give it longer:** add the line `MONGODB_TIMEOUT_MS=30000` to `backend/.env` (it waits 30 seconds instead of 10), save, and try again. Also check your internet, a VPN, and that the cluster is not paused. To test whether your network can reach Atlas at all, run `Test-NetConnection <the first server name after the @ in your connection string> -Port 27017` and look for `TcpTestSucceeded : True`. If it says `False`, this network blocks the database port: try another network (home or campus Wi-Fi, or a phone hotspot that worked before). The long "IP whitelist" sentence in the message is printed for any timeout, so it does not prove the address is the cause |
 | `The database address could not be found` | The part after `@` in the connection string is wrong, or you are offline. Copy the string from Atlas again |
 | `Port 4000 is already in use` | Another program uses the port. Close it, or add `PORT=4001` to `backend/.env` |
 
@@ -279,7 +279,7 @@ If it is none of these, copy the **whole** terminal text and send it. (The tool 
 npm run test:db
 ```
 
-On success you will see `Tests: 200 passed, 200 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+On success you will see `Tests: 208 passed, 208 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
 
 ---
 
@@ -303,7 +303,7 @@ npm ci
 npm test
 ```
 
-You should see `Tests: 60 skipped, 140 passed, 200 total`, with 0 failed.
+You should see `Tests: 60 skipped, 148 passed, 208 total`, with 0 failed.
 
 ### 4.2 Make a secret key for logins
 

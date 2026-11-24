@@ -50,7 +50,7 @@ async function main() {
 
   // 2. Database.
   try {
-    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName });
+    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName, serverSelectionTimeoutMS: config.dbTimeoutMs });
   } catch (err) {
     return stopWithMessage([describeConnectionError(err, config.mongodbUri)]);
   }

@@ -27,9 +27,9 @@ async function main() {
     return 1;
   }
 
-  console.log('Connecting to MongoDB (waiting up to 10 seconds)...');
+  console.log(`Connecting to MongoDB (waiting up to ${Math.round(config.dbTimeoutMs / 1000)} seconds)...`);
   try {
-    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName });
+    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName, serverSelectionTimeoutMS: config.dbTimeoutMs });
   } catch (err) {
     console.error(describeConnectionError(err, config.mongodbUri));
     return 1;

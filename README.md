@@ -19,7 +19,7 @@ What exists and is tested:
 - Security headers and a CORS allow-list are in place.
 - Unknown URLs and malformed requests get clean, standard JSON error replies.
 - Bad settings and database problems stop the server with a plain-English explanation, never showing the password.
-- 200 automated tests pass (60 of them need a real database; see the setup guide).
+- 208 automated tests pass (60 of them need a real database; see the setup guide).
 - The connection to a real **MongoDB Atlas** cluster has been verified from the owner's laptop.
 - **Accounts and login (Stage 4):** sign-up, login, profile and password change; login tokens; roles (nobody can make themselves an administrator); a safe script for the first administrator; password-guessing protection. A Postman collection in `documentation/postman` lets you try it by clicking.
 

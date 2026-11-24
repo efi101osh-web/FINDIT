@@ -24,6 +24,7 @@ const DEFAULT_CORS_ORIGINS = 'http://localhost:5173'; // the admin dashboard's d
 const DEFAULT_JWT_EXPIRES_IN = '7d';
 const MAX_JWT_LIFETIME_MINUTES = 30 * 24 * 60; // 30 days: tokens cannot be revoked, so keep them short-lived
 const DEFAULT_BCRYPT_ROUNDS = 12;
+const DEFAULT_DB_TIMEOUT_MS = 10000;
 
 /** Clean and check the MongoDB connection string. It is a SECRET: never put it in a message. */
 function parseMongoUri(raw) {
@@ -90,6 +91,18 @@ function parseCorsOrigins(raw) {
       }
       return origin;
     });
+}
+
+/** How long to wait for the database to answer when connecting, in milliseconds (slow networks need longer). */
+function parseDbTimeout(raw) {
+  const text = String(raw === undefined || String(raw).trim() === '' ? DEFAULT_DB_TIMEOUT_MS : raw).trim();
+  const value = Number(text);
+  if (!/^\d+$/.test(text) || value < 1000 || value > 120000) {
+    throw new Error(
+      `Invalid MONGODB_TIMEOUT_MS "${text}". Use a whole number of milliseconds from 1000 to 120000 (for example 30000 means 30 seconds).`
+    );
+  }
+  return value;
 }
 
 /** The key that signs login tokens. A SECRET: never put it in a message. */
@@ -211,6 +224,7 @@ function loadConfig(env = process.env) {
     isProduction: nodeEnv === 'production',
     isTest: nodeEnv === 'test',
     dbName: parseDbName(env.MONGODB_DB_NAME),
+    dbTimeoutMs: parseDbTimeout(env.MONGODB_TIMEOUT_MS),
     corsOrigins: parseCorsOrigins(env.CORS_ORIGINS),
     jwtExpiresIn: parseJwtExpiresIn(env.JWT_EXPIRES_IN),
     bcryptRounds: parseBcryptRounds(env.BCRYPT_ROUNDS, nodeEnv),

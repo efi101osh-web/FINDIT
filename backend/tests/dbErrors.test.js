@@ -40,6 +40,7 @@ describe('describeConnectionError', () => {
     expect(text).toMatch(/did not answer in time/i);
     expect(text).toMatch(/Network Access/);
     expect(text).toMatch(/IP address/);
+    expect(text).toMatch(/MONGODB_TIMEOUT_MS=30000/); // the hint for slow or mobile connections
   });
 
   test('anything else falls back to a generic message that still shows the (redacted) detail', () => {

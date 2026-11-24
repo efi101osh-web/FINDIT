@@ -42,7 +42,7 @@ async function main() {
   }
 
   try {
-    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName });
+    await connectDatabase({ uri: config.mongodbUri, dbName: config.dbName, serverSelectionTimeoutMS: config.dbTimeoutMs });
   } catch (err) {
     console.error(describeConnectionError(err, config.mongodbUri));
     return 1;
