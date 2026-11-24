@@ -1,6 +1,6 @@
 # FINDIT: Test Plan
 
-> **Status:** The plan is written (93 backend cases). Automated tests began in Stage 2 and now number 208 Jest tests (148 run by default, 60 need a real database), covering 32 of the planned backend cases (one, T-ADM-01, only against a stand-in route until Stage 12). Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
+> **Status:** The plan is written (93 backend cases). Automated tests began in Stage 2 and now number 210 Jest tests (150 run by default, 60 need a real database), covering 32 of the planned backend cases (one, T-ADM-01, only against a stand-in route until Stage 12). Everything not listed in the [results log](#8-results-log) is `Not run`. A test that could not be executed in the current environment is marked `Needs laptop`, never `Pass`.
 
 ## 1. Strategy
 

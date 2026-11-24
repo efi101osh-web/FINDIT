@@ -14,6 +14,7 @@ const {
 } = require('./config/db');
 const { initModels } = require('./models');
 const { createApp } = require('./app');
+const { configureServer } = require('./utils/configureServer');
 
 function stopWithMessage(lines) {
   console.error(lines.join('\n'));
@@ -61,7 +62,7 @@ async function main() {
 
   // 3. Web server.
   const app = createApp(config);
-  const server = app.listen(config.port);
+  const server = configureServer(app.listen(config.port));
 
   server.once('listening', () => {
     console.log(`FINDIT API is running (${config.nodeEnv} mode).`);

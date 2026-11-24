@@ -105,7 +105,7 @@ npm test
 [tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
 
 Test Suites: 7 skipped, 7 passed, 7 of 14 total
-Tests:       60 skipped, 148 passed, 208 total
+Tests:       60 skipped, 150 passed, 210 total
 ```
 
 The **60 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
@@ -118,6 +118,8 @@ The **60 skipped** tests are the ones that need a real MongoDB. They are deliber
 | `EBADENGINE` warning, or tests will not start | Your Node.js version is not supported. Run `node --version`. Use **22.x or 24.x** |
 | `running scripts is disabled on this system` (Windows PowerShell) | PowerShell's safety setting is blocking npm's script. Type `npm.cmd` instead of `npm` (same program), or use Command Prompt |
 | `git pull` says *"Your local changes to the following files would be overwritten by merge: backend/package-lock.json"* | `npm install` rewrote that file on your computer and Git is protecting it. Nothing of yours is lost. Run `git status` (only `package-lock.json` should be listed), then `git restore package-lock.json`, then `git pull`, then `npm ci`. If `git status` lists other files you did not change on purpose, send the output before restoring |
+| Postman says `Error: read ECONNRESET` on a request that should work | A connection that had sat idle was reused just as the server closed it. Press **Send** again. (Updated servers keep idle connections open for 65 seconds instead of 5, which prevents it.) |
+| Postman says `Error: connect ECONNREFUSED 127.0.0.1:4000` | The server is not running. Start it with `npm run dev` and wait for the `FINDIT API is running` line. Keep that window open |
 | Any test says **failed** | Copy the **whole** terminal text and send it to the assistant |
 
 ---
@@ -279,7 +281,7 @@ If it is none of these, copy the **whole** terminal text and send it. (The tool 
 npm run test:db
 ```
 
-On success you will see `Tests: 208 passed, 208 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+On success you will see `Tests: 210 passed, 210 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
 
 ---
 
@@ -303,7 +305,7 @@ npm ci
 npm test
 ```
 
-You should see `Tests: 60 skipped, 148 passed, 208 total`, with 0 failed.
+You should see `Tests: 60 skipped, 150 passed, 210 total`, with 0 failed.
 
 ### 4.2 Make a secret key for logins
 

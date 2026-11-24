@@ -15,7 +15,7 @@ Start with [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md). To see what is actually b
 | [API_CONTRACT.md](API_CONTRACT.md) | All 37 planned endpoints with requests, responses, errors, examples | 7 of 37 endpoints implemented (health, sign-up, login, profile) |
 | [SECURITY_PLAN.md](SECURITY_PLAN.md) | Threats, the 27 controls, accepted risks, rules for the repository | Plan. Nine controls implemented, seven partly started |
 | [DECISIONS.md](DECISIONS.md) | Why each technical choice was made | Living |
-| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 208 automated tests so far (see results log) |
+| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 210 automated tests so far (see results log) |
 | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | What exists and what is verified | Living |
 | [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, first administrator, Postman) |
 | [USER_GUIDE.md](USER_GUIDE.md) | How to use the finished app | Outline only (written in Stage 19) |
