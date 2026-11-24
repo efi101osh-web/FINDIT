@@ -125,7 +125,7 @@ describe('createItemSchema: where it was (zone + detail)', () => {
   });
 
   test('"Not sure which" is a valid choice in every list', () => {
-    for (const zone of ['MALE_HALLS', 'FEMALE_HALLS', 'CHURCH', 'AUDITORIUM', 'OTHER_HALLS']) {
+    for (const zone of ['MALE_HALLS', 'FEMALE_HALLS', 'CHURCH', 'AUDITORIUM']) {
       expect(parse(createItemSchema, validLost({ generalLocation: zone, locationDetail: 'Not sure which' })).success).toBe(true);
     }
   });

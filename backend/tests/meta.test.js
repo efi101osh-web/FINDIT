@@ -27,7 +27,7 @@ describe('GET /api/v1/meta/options', () => {
 
   test('the campus locations are zones, each saying how to ask for detail, with the places to choose from', async () => {
     const { data } = (await request(app).get('/api/v1/meta/options')).body;
-    expect(data.campusLocations).toHaveLength(16);
+    expect(data.campusLocations).toHaveLength(15);
     const male = data.campusLocations.find((z) => z.code === 'MALE_HALLS');
     expect(male).toMatchObject({ code: 'MALE_HALLS', label: 'Halls of residence (male)', detail: { mode: 'LIST' } });
     expect(male.detail.options).toContain('Winslow');

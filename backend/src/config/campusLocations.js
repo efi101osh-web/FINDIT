@@ -69,12 +69,14 @@ const LOCATION_ZONES = Object.freeze([
       hint: 'Which hall?',
       options: list([
         'Bethel Splendor',
+        'Emerald Hall',
         'Gamaliel Classic Hall (Iperu campus)',
         'Gamaliel Hall',
         'Gideon Troopers',
         'Neal Wilson',
         'Nelson Mandela',
         'Samuel Akande',
+        'Topaz Hall',
         'Welch',
         'Winslow',
       ]),
@@ -100,13 +102,6 @@ const LOCATION_ZONES = Object.freeze([
         'White',
       ]),
     },
-  },
-  {
-    // Emerald and Topaz appeared in the campus hall list without a male/female label.
-    // Move each into MALE_HALLS or FEMALE_HALLS once that is confirmed.
-    code: 'OTHER_HALLS',
-    label: 'Other halls of residence',
-    detail: { mode: 'LIST', hint: 'Which hall?', options: list(['Emerald Hall', 'Topaz Hall']) },
   },
   {
     code: 'CHURCH',

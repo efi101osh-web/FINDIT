@@ -35,7 +35,7 @@ describe('the list of zones', () => {
 
   test('the zones that are free text have no list, and the ones with a list are exactly the expected ones', () => {
     expect(LOCATION_ZONES.filter((z) => z.detail.mode === 'LIST').map((z) => z.code).sort()).toEqual(
-      ['AUDITORIUM', 'CHURCH', 'FEMALE_HALLS', 'MALE_HALLS', 'OTHER_HALLS'].sort()
+      ['AUDITORIUM', 'CHURCH', 'FEMALE_HALLS', 'MALE_HALLS'].sort()
     );
     for (const zone of LOCATION_ZONES.filter((z) => z.detail.mode !== 'LIST')) expect(zone.detail.options).toBeUndefined();
   });
@@ -43,13 +43,11 @@ describe('the list of zones', () => {
   test('no hall appears in both the male and the female list', () => {
     const real = (code) => optionsOf(code).filter((n) => n !== NOT_SURE_WHICH);
     const male = new Set(real('MALE_HALLS'));
-    for (const name of [...real('FEMALE_HALLS'), ...real('OTHER_HALLS')]) expect(male.has(name)).toBe(false);
-    const female = new Set(real('FEMALE_HALLS'));
-    for (const name of real('OTHER_HALLS')) expect(female.has(name)).toBe(false);
+    for (const name of real('FEMALE_HALLS')) expect(male.has(name)).toBe(false);
   });
 
   test('contains the campus places the owner supplied (spot checks)', () => {
-    expect(optionsOf('MALE_HALLS')).toEqual(expect.arrayContaining(['Winslow', 'Gideon Troopers', 'Neal Wilson', 'Welch', 'Bethel Splendor']));
+    expect(optionsOf('MALE_HALLS')).toEqual(expect.arrayContaining(['Winslow', 'Gideon Troopers', 'Neal Wilson', 'Welch', 'Bethel Splendor', 'Emerald Hall', 'Topaz Hall']));
     expect(optionsOf('FEMALE_HALLS')).toEqual(expect.arrayContaining(['Queen Esther', 'Crystal', 'Ameyo Adadevoh', 'Nyberg']));
     expect(optionsOf('CHURCH')).toEqual(expect.arrayContaining(['Pioneer Church', 'Youth Church', 'Ebenezer Chapel']));
     expect(optionsOf('CHURCH')).toHaveLength(29 + 1); // 29 churches and chapels plus "Not sure which"

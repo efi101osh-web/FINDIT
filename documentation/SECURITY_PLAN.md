@@ -1,6 +1,6 @@
 # FINDIT: Security Plan
 
-> **Status: 9 controls are implemented and tested (S-01 to S-04, S-07, S-14, S-15, S-16, S-24). 11 are partly started (marked `Partial`: S-05, S-06, S-08, S-09, S-11, S-12, S-13, S-17, S-19, S-20, S-23). The rest are `Planned`.** The Stage 5 results were tested in the cloud container; the check on the owner's laptop is pending. Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
+> **Status: 9 controls are implemented and tested (S-01 to S-04, S-07, S-14, S-15, S-16, S-24). 11 are partly started (marked `Partial`: S-05, S-06, S-08, S-09, S-11, S-12, S-13, S-17, S-19, S-20, S-23). The rest are `Planned`.** The Stage 5 controls were tested in the cloud container, and the Postman refusals were tried on the owner's laptop against Atlas (owner-reported). Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
 
 ## 1. What we are protecting
 

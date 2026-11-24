@@ -2,7 +2,7 @@
 
 > **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend), Part 3 (create the database and run the server), Part 4 (first administrator), Part 5 (try the API with Postman) and Part 6 (report lost and found items) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** **Part 6 was tested in the container only (a live server, a real database and the Postman collection run with Newman: 26 requests, 0 failed; the laptop run is pending).** If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** **Part 6 was tested in the container (a live server, a real database and the Postman collection run with Newman: 26 requests, 0 failed) and then on the owner's Windows laptop against Atlas (owner-reported: the new requests and all 12 refusals gave their expected results).** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -487,7 +487,7 @@ In Atlas, open your cluster, click **Browse Collections**, then database `findit
 
 ### 6.8 What to tell the assistant
 
-Please tell it: (1) the `npm test` result line, (2) whether requests 6 to 12 and the refusals all gave what the table says (or which one did not, with the reply text, **after replacing any email or token with `***`**), and (3) **which side Emerald Hall and Topaz Hall belong to (male or female hall)**, and whether "Nyberg" is the right spelling.
+Please tell it: (1) the `npm test` result line, and (2) whether requests 6 to 12 and the refusals all gave what the table says (or which one did not, with the reply text, **after replacing any email or token with `***`**).
 
 ---
 
