@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-24 (Stage 4 built; owner's laptop check partly done, working through a network problem)
+**Last updated:** 2026-11-24 (end of Stage 4)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -11,8 +11,8 @@ This file is the **single source of truth for what actually exists and has been 
 | | |
 |---|---|
 | **Current stage** | Stage 4: Authentication and user management |
-| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 210 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **On the owner's laptop so far:** the 140 default tests pass, and the first administrator was created in the real Atlas database. **Still pending:** starting the server against Atlas and running the Postman collection, because the owner's current mobile (MiFi) network could not reach Atlas afterwards (see section 5). Stages 1 to 3 are fully verified |
-| **Next stage** | Stage 5: Lost and found item reporting (after the owner's check) |
+| **State** | ✅ Stages 1 to 4 complete and verified: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
+| **Next stage** | Stage 5: Lost and found item reporting |
 | **What works today** | Everything from Stage 3, plus: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
 
@@ -23,7 +23,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
 | 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
-| 4 | Authentication and user management | ⚠️ | Verified in the container. On the owner's laptop: tests pass and the first administrator was created in Atlas. **Server start and Postman run pending** (network problem, section 5). Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
+| 4 | Authentication and user management | ✅ | Verified in the container and on the owner's laptop against Atlas. Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
 | 5 | Lost and found item reporting | ⬜ | |
 | 6 | Browsing and search | ⬜ | |
 | 7 | Mobile app foundation and screens | ⬜ | Decision D-019 (Expo SDK) to be settled here |
@@ -45,14 +45,14 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **7**: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password` | Container with a real MongoDB. On the owner's laptop and Atlas: `/health` only so far |
-| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **1**: `users` | Container (real MongoDB) |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **7**: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password` | Container (real MongoDB) and the owner's laptop (Atlas, through Postman) |
+| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **1**: `users` | Container (real MongoDB) and the owner's Atlas database (the real administrator and Postman test accounts) |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
 | Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **9 implemented** (S-01 to S-04, S-07, S-14, S-15, S-16, S-24), **7 partial** (below) | Container: automated tests plus deliberately planted bugs |
 | Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 93 | 32 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
 | Automated tests (Jest) | n/a | 210 (150 run by default, 60 need a real database) | `test:db`: 210 of 210 pass. Default `npm test`: 150 pass, 60 skipped (container). Owner's laptop: not yet run since Stage 3 |
-| Postman collection ([documentation/postman](postman)) | n/a | 11 requests, 19 checks | Run with Newman against a live server: 0 failed. Not yet run in the Postman app on the owner's laptop |
+| Postman collection ([documentation/postman](postman)) | n/a | 11 requests, 19 checks | Newman against a live server: 0 failed. Owner's Postman app on Windows against Atlas: every request gave its expected result |
 
 **Implemented and tested** (S-15 and S-16 in Stage 3; the rest in Stage 4):
 - **S-01 Password hashing:** `bcryptjs`, cost 12 by default (never below 10 in production). The raw database value is a 60-character bcrypt hash.
@@ -188,22 +188,23 @@ Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, MongoDB 
 | `npm test` | ✅ **140 passed, 60 skipped, 0 failed** (7 suites passed, 7 skipped) |
 | `npm run seed:admin` against Atlas | ✅ **SUCCESS**: the first administrator now exists in the real Atlas database |
 | Postman collection imported | ✅ Import Complete; all 11 requests are present (owner's screenshot) |
-| Starting the server and running the Postman requests | ⏸ **Not completed.** After the owner changed location and network (a phone hotspot earlier, then an MTN MiFi), the server and `npm run check:db` could not reach Atlas: *"The database did not answer in time"*. Cause not yet confirmed (see section 5) |
+| Starting the server and running the Postman requests | ✅ After switching from the MTN MiFi to the phone's hotspot (mobile data), `npm run check:db` connected to Atlas (server 8.0.39). Then, owner-reported: health 200 with `database: connected`; Register (one `ECONNRESET` on the first try, a retry gave 201); Login, Who am I, Update profile and Change password all as expected; the four refusals (sign-up as admin, change email via profile, wrong password, no token) were all refused as designed; the administrator login gave 200 |
 
 **Added on 2026-11-24 in response to the network problem:** a `MONGODB_TIMEOUT_MS` setting (default 10 seconds, 1 to 120 seconds allowed) so a slow mobile connection can be given longer to reach Atlas, and a hint in the timeout message pointing to it. Verified in the container: 208 of 208 tests pass, and the setting measurably changes how long `check:db` waits (1.5 s setting gave up after 1.7 s; 4 s after 4.2 s). Not yet tried on the owner's network.
 
 **Also added on 2026-11-24, after the owner's first Postman request failed once with `ECONNRESET` (a retry worked):** the server now keeps idle connections open for 65 seconds instead of Node's default 5 (`utils/configureServer.js`), because clients that reuse a connection just as the server closes it get that error. Verified in the container: 210 of 210 tests pass, removing the setting makes 2 tests fail, and the real server advertises `Keep-Alive: timeout=65` and still shuts down in 10 ms with an idle connection open. The glitch itself is timing-dependent, so it could not be reproduced here; the owner's retry succeeding fits this cause but did not prove it.
 
 **Not verified in Stage 4**
-- **Starting the server against Atlas and running the Postman requests on the owner's laptop** (setup guide Part 5). Blocked by the network problem above, not by the code: the same code passed every test and the live run in the container.
-- **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12).
-- **The Postman app on Windows** (the collection was run with Newman, Postman's command-line runner).
+- **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12). Not measured.
+- **The `findit_app` and Atlas allow-list settings** are owner-reported, not independently checked.
+- **Why the server window sometimes returned to the prompt on its own.** The owner reported that `npm run dev` stopped by itself (twice, with no error message and no "Shutting down" line). The exit code was not captured, and the server stayed up long enough for every check. Suspected causes: an accidental Ctrl+C or window action, or watch mode. Watch item, see section 5.
 
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
 |---|---|---|
-| **Network (owner)** | On the owner's MTN MiFi (mobile network) the laptop cannot reach Atlas. Likely causes: mobile networks change the public address constantly (so an address-specific Atlas allow-list entry stops working), and some mobile networks block or slow the database port (27017). Next: add "Allow Access from Anywhere" in Atlas Network Access, then `npm run check:db`; if that still fails, `Test-NetConnection <atlas host> -Port 27017` to see whether the network blocks it, and try another network. Then run the Postman collection (Part 5) | When the owner is on a working network |
+| Network (owner), resolved | The MTN MiFi could not reach Atlas (a mobile network that changes the public address and may block the database port). On the phone's hotspot it works. For development, use the phone hotspot, and in Atlas Network Access use *Allow Access from Anywhere* while the address keeps changing (to be tightened before real use). A `MONGODB_TIMEOUT_MS` setting exists for slow connections | Owner, ongoing |
+| Server window stopping (watch) | `npm run dev` returned to the prompt by itself twice, silently. If it recurs, run `$LASTEXITCODE` right after it stops and report the number. `npm start` (no watch mode) is the steadier way to run it for testing | When it recurs, or in Stage 8 |
 | **Demo network plan** | The final demonstration needs the laptop to reach Atlas. Options to settle before Stage 20: a stable Wi-Fi or a hotspot that is known to work, or a local MongoDB on the laptop as an offline fallback (the app only needs a different `MONGODB_URI`; the Windows test copy is large, so this would be prepared deliberately). Ordinary app users will never connect to Atlas themselves, only the backend does | Stage 17 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
 | Audit | 18 moderate advisories in Jest's dev-only dependency chain (production dependencies: 0) | Stage 16 |
