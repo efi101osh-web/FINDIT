@@ -166,6 +166,8 @@ In the left menu open **Network Access**. Your current IP address should already
 
 Atlas only accepts connections from addresses on this list. **When you change network** (home Wi-Fi, campus Wi-Fi, a phone hotspot), your address changes and you must add the new one. It is the most common reason for connection failures. For a short demo on an unknown network you can choose **Allow access from anywhere**, which is less secure, so remove it afterwards.
 
+**On mobile data, a MiFi or a phone hotspot, use "Allow access from anywhere" while you develop.** Mobile networks share one public address between many customers and change it often (sometimes within minutes), so an entry for "your current address" can stop working while you are using it. This is safe enough for development because the database holds only test data, the database user has limited rights, and the password is strong. Tighten it again before real use.
+
 ### 3.5 Get the connection string
 
 Go to **Database** → find your cluster → **Connect** → **Drivers** → **Node.js**. Leave **Enable network compression** unticked. Atlas shows a connection string in one of two shapes. **Both work with FINDIT:**
@@ -263,7 +265,7 @@ The program explains problems in plain words. The common ones:
 | `Invalid MONGODB_URI. It must start with ...` | Something comes before `mongodb`. Run the 20-character check in 3.6 to see the start of the line, and remove whatever precedes `mongodb` |
 | `MONGODB_URI still contains a placeholder` | You left `<db_username>` or `<db_password>` in. Replace the whole placeholder including the `<` `>` |
 | `The database rejected the username or password` | Wrong username or password, or the password has special characters. In Atlas → Database Access, edit the user and set a new letters-and-digits password. Update `.env` |
-| `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4. Also check your internet, a VPN, and that the cluster is not paused |
+| `The database did not answer in time` | **Most often your IP address is not allowed:** redo 3.4 (on mobile data or a MiFi choose *Allow access from anywhere*, and wait until it shows Active). Also check your internet, a VPN, and that the cluster is not paused. To test whether your network can reach Atlas at all, run `Test-NetConnection <the first server name after the @ in your connection string> -Port 27017` and look for `TcpTestSucceeded : True`. If it says `False`, this network blocks the database port: try another network (home or campus Wi-Fi, or a phone hotspot that worked before). The long "IP whitelist" sentence in the message is printed for any timeout, so it does not prove the address is the cause |
 | `The database address could not be found` | The part after `@` in the connection string is wrong, or you are offline. Copy the string from Atlas again |
 | `Port 4000 is already in use` | Another program uses the port. Close it, or add `PORT=4001` to `backend/.env` |
 

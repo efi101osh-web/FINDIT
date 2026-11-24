@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-23 (Stage 4 built; owner's laptop check pending)
+**Last updated:** 2026-11-24 (Stage 4 built; owner's laptop check partly done, paused on a network problem)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -11,7 +11,7 @@ This file is the **single source of truth for what actually exists and has been 
 | | |
 |---|---|
 | **Current stage** | Stage 4: Authentication and user management |
-| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 200 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **Not yet run on the owner's laptop or against Atlas.** The owner's steps are [SETUP_GUIDE.md](SETUP_GUIDE.md) Parts 4 and 5. Stages 1 to 3 are fully verified |
+| **State** | ⚠️ Built and verified in the cloud container against a **real MongoDB 8.0.17**: 200 automated tests pass, 25 deliberately planted security bugs were each caught, and a live end-to-end run (curl and the Postman collection) passed. **On the owner's laptop so far:** the 140 default tests pass, and the first administrator was created in the real Atlas database. **Still pending:** starting the server against Atlas and running the Postman collection, because the owner's current mobile (MiFi) network could not reach Atlas afterwards (see section 5). Stages 1 to 3 are fully verified |
 | **Next stage** | Stage 5: Lost and found item reporting (after the owner's check) |
 | **What works today** | Everything from Stage 3, plus: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
@@ -23,7 +23,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 1 | Project blueprint and requirements | ✅ | Documents and diagrams complete and checked |
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
 | 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
-| 4 | Authentication and user management | ⚠️ | Verified in the container. **Owner's laptop and Atlas check pending** (setup guide Parts 4 and 5). Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
+| 4 | Authentication and user management | ⚠️ | Verified in the container. On the owner's laptop: tests pass and the first administrator was created in Atlas. **Server start and Postman run pending** (network problem, section 5). Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
 | 5 | Lost and found item reporting | ⬜ | |
 | 6 | Browsing and search | ⬜ | |
 | 7 | Mobile app foundation and screens | ⬜ | Decision D-019 (Expo SDK) to be settled here |
@@ -179,8 +179,19 @@ Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.1
 4. **Placeholder text accepted as a secret:** a forgotten `<paste the key here>` would have become the token-signing key, and a forgotten placeholder could have become the admin password. Both are now refused.
 5. **Test gap:** the deliberate-bug check revealed that nothing proved the rate limits in `.env` were used. A test was added.
 
+### Stage 4 on the owner's laptop and MongoDB Atlas, 2026-11-23 and 2026-11-24
+Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, MongoDB Atlas free cluster.
+
+| Check | Result |
+|---|---|
+| `git pull`, then `npm ci` | ✅ Fast-forward with no conflict (the lock-file problem did not recur). 429 packages (431 in the container; platform difference) |
+| `npm test` | ✅ **140 passed, 60 skipped, 0 failed** (7 suites passed, 7 skipped) |
+| `npm run seed:admin` against Atlas | ✅ **SUCCESS**: the first administrator now exists in the real Atlas database |
+| Postman collection imported | ✅ Import Complete; all 11 requests are present (owner's screenshot) |
+| Starting the server and running the Postman requests | ⏸ **Not completed.** After the owner changed location and network (a phone hotspot earlier, then an MTN MiFi), the server and `npm run check:db` could not reach Atlas: *"The database did not answer in time"*. Cause not yet confirmed (see section 5) |
+
 **Not verified in Stage 4**
-- **The owner's laptop and MongoDB Atlas:** creating the real first administrator and running the Postman collection there (setup guide Parts 4 and 5). Nothing from the container can reach Atlas.
+- **Starting the server against Atlas and running the Postman requests on the owner's laptop** (setup guide Part 5). Blocked by the network problem above, not by the code: the same code passed every test and the live run in the container.
 - **Password-hashing time on the owner's laptop** (estimated at 0.7 to 1 s per login at cost 12).
 - **The Postman app on Windows** (the collection was run with Newman, Postman's command-line runner).
 
@@ -188,7 +199,8 @@ Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.1
 
 | ID | Item | Decide / fix at |
 |---|---|---|
-| **Owner action** | Create the first administrator and try the Postman collection ([SETUP_GUIDE.md](SETUP_GUIDE.md) Parts 4 and 5). This is what fully verifies Stage 4 | Before Stage 5 |
+| **Network (owner)** | On the owner's MTN MiFi (mobile network) the laptop cannot reach Atlas. Likely causes: mobile networks change the public address constantly (so an address-specific Atlas allow-list entry stops working), and some mobile networks block or slow the database port (27017). Next: add "Allow Access from Anywhere" in Atlas Network Access, then `npm run check:db`; if that still fails, `Test-NetConnection <atlas host> -Port 27017` to see whether the network blocks it, and try another network. Then run the Postman collection (Part 5) | When the owner is on a working network |
+| **Demo network plan** | The final demonstration needs the laptop to reach Atlas. Options to settle before Stage 20: a stable Wi-Fi or a hotspot that is known to work, or a local MongoDB on the laptop as an offline fallback (the app only needs a different `MONGODB_URI`; the Windows test copy is large, so this would be prepared deliberately). Ordinary app users will never connect to Atlas themselves, only the backend does | Stage 17 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
 | Audit | 18 moderate advisories in Jest's dev-only dependency chain (production dependencies: 0) | Stage 16 |
 | Risks 10 to 12 | Rate-limit counters in memory; no per-account lock-out across addresses; hosting behind a proxy needs `trust proxy` ([SECURITY_PLAN.md](SECURITY_PLAN.md) section 4) | Stages 16 and 17 |
