@@ -51,7 +51,7 @@ Defined once in `backend/src/config/constants.js` and served to the clients by `
 | `CATEGORIES` | `ELECTRONICS`, `BAGS`, `WALLETS_AND_CARDS`, `KEYS`, `CLOTHING`, `ACCESSORIES`, `DOCUMENTS`, `BOOKS_AND_STATIONERY`, `SPORTS_EQUIPMENT`, `OTHER` |
 | `COLOURS` | `BLACK`, `WHITE`, `GREY`, `SILVER`, `RED`, `ORANGE`, `YELLOW`, `GREEN`, `BLUE`, `PURPLE`, `PINK`, `BROWN`, `BEIGE`, `GOLD`, `MULTICOLOUR`, `OTHER` |
 | `TIME_BANDS` | `MORNING` (06:00–12:00), `AFTERNOON` (12:00–17:00), `EVENING` (17:00–21:00), `NIGHT` (21:00–06:00), `UNKNOWN` |
-| `CAMPUS_LOCATIONS` | A configurable list of general areas, e.g. *Main Library, Student Centre, Cafeteria, Sports Complex, Lecture Halls, Science Block, Admin Block, Parking Area, Hostels, Other*. **Placeholders to replace with your campus areas in Stage 5** |
+| `CAMPUS_LOCATIONS` | **16 zones** (library, classrooms, auditoriums, male halls, female halls, other halls, churches, cafeteria, sports, hospital, administration, shops, gates and parking, Iperu campus, off campus, not sure). Each zone says how much more detail is needed: pick from a **list** (which hall, which church), type a **required** short description (which library, which class number), or an **optional** one. Defined in one file, `backend/src/config/campusLocations.js`, from real Babcock University place names. No capacities or people's names are stored |
 | `ITEM_STATUSES` | `OPEN`, `POTENTIAL_MATCH`, `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN`, `RETURNED`, `CLOSED` |
 | `CLAIM_STATUSES` | `PENDING`, `UNDER_REVIEW`, `NEEDS_MORE_INFORMATION`, `APPROVED`, `REJECTED`, `WITHDRAWN` |
 | `COLLECTION_STATUSES` | `PENDING_ARRANGEMENT`, `SCHEDULED`, `COMPLETED`, `CANCELLED` |
@@ -102,22 +102,30 @@ One document per lost or found report.
 | `title` | String | yes | public | 3–80 characters ("item name") |
 | `category` | String | yes | public | One of `CATEGORIES` |
 | `description` | String | yes | public | 10–1000 characters. UI warns: describe the item generally; put identifying marks in *private details* |
-| `images` | Array of `{ url, publicId }` | no | public | Max 3. URLs must belong to **our** Cloudinary account (checked on save) |
+| `images` | Array of `{ url, publicId }` | no | public | Max 3. URLs must belong to **our** Cloudinary account (checked on save). **Not in the model yet: added in Stage 9** |
 | `colour` | String | yes | public | One of `COLOURS` |
 | `brand` | String | no | public | Max 40 characters |
 | `privateDetails` | String | no | **private** | Max 1000. Lost: distinguishing characteristics. Found: identifying details used to verify a claimant. **`select: false`** |
-| `generalLocation` | String | yes | public | One of `CAMPUS_LOCATIONS`. A *general area*, never a precise or private spot |
-| `dateOccurred` | Date | yes | public | Date lost / found. Not in the future |
+| `generalLocation` | String | yes | public | A **zone code** from `CAMPUS_LOCATIONS` (for example `MALE_HALLS`). A general area, never a precise or private spot |
+| `locationDetail` | String | by zone | public | Which hall / library / class. Required, optional or a fixed list depending on the zone, 3–80 characters. Checked together with `generalLocation` by `checkLocation()`. Only a **hint**: items get moved |
+| `dateOccurred` | Date | yes | public | Date lost / found, stored as midnight UTC. Not more than one day in the future (slack for Nigerian clocks running ahead of the server's UTC clock) and not more than 365 days ago |
 | `approximateTime` | String | yes | public | One of `TIME_BANDS`. Default `UNKNOWN` |
 | `status` | String | yes | public | One of `ITEM_STATUSES`. Default `OPEN`. Changed **only** by the status service (never directly from request data) |
 | `reporterId` | ObjectId → `users` | yes | **private** | Never exposed publicly. Clients receive only an `isMine` flag |
 | `handedToOffice` | Boolean | FOUND only | public | Reporter's declaration that the item was handed to an authorised office. Staff may correct it. Default `false` |
 | `privateStorageLocation` | String | no | **private** | Max 200. Where the found item is kept. Visible to reporter and admins. **`select: false`** |
-| `closedAt` | Date | no | public | Set when closed |
-| `closeReason` | String | no | private | Max 200 |
+| `closedAt` | Date | no | private | Set when closed. Shown only to the reporter and administrators (a closed report is invisible to everyone else) |
+| `closeReason` | String | no | **private** | Max 200. **`select: false`** |
 | `createdAt`, `updatedAt` | Date | auto | | |
 
 Fields that exist only for FOUND (`handedToOffice`, `privateStorageLocation`) are rejected on LOST reports.
+
+**Implemented in Stage 5** (`backend/src/models/Item.js`, verified against a real MongoDB):
+- The three private fields (`privateDetails`, `privateStorageLocation`, `closeReason`) use `select: false`, so a normal query never loads them. The service loads them with a second query only for the reporter or an administrator, so a public view cannot leak them even by mistake.
+- `reportType` and `reporterId` are `immutable`: even code that changes them and saves has no effect (tested).
+- The model itself refuses found-only fields on a LOST report and values outside the allowed lists, even if the API were bypassed.
+- All five indexes above exist and are built when the server starts (tested).
+- Status changes go through `backend/src/services/statusRules.js` (the transition table); the model only stores the value.
 
 **Indexes**
 
@@ -127,9 +135,9 @@ Fields that exist only for FOUND (`handedToOffice`, `privateStorageLocation`) ar
 | `{ category: 1, reportType: 1, status: 1 }` | Matching candidate lookup |
 | `{ reporterId: 1, createdAt: -1 }` | "My reports" |
 | `{ dateOccurred: -1 }` | Date filters and date sorting |
-| `{ generalLocation: 1 }` | Location filter |
+| `{ generalLocation: 1 }` | Location (zone) filter |
 
-**Search design.** Keyword search uses a case-insensitive, *escaped* regular-expression match on `title`, `description`, `brand` and `generalLocation`. This is chosen over MongoDB `$text` search because `$text` does not match partial words (typing "head" would not find "headphones"). The search text is always escaped, so it can never act as a pattern. For campus-scale data this is fast enough. See [DECISIONS.md](DECISIONS.md) D-011.
+**Search design.** Keyword search uses a case-insensitive, *escaped* regular-expression match on `title`, `description`, `brand`, the zone's label and `locationDetail`. This is chosen over MongoDB `$text` search because `$text` does not match partial words (typing "head" would not find "headphones"). The search text is always escaped, so it can never act as a pattern. For campus-scale data this is fast enough. See [DECISIONS.md](DECISIONS.md) D-011.
 
 ---
 

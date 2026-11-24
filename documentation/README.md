@@ -12,15 +12,15 @@ Start with [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md). To see what is actually b
 | [REQUIREMENTS.md](REQUIREMENTS.md) | Numbered functional and non-functional requirements, and the roles and permissions matrix | Complete (Stage 1) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System design, folder structure, request flow, status flows, matching, design tokens | Design (Stage 1) |
 | [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) | Collections, fields, validation, indexes, relationships | Design (Stage 1) |
-| [API_CONTRACT.md](API_CONTRACT.md) | All 37 planned endpoints with requests, responses, errors, examples | 7 of 37 endpoints implemented (health, sign-up, login, profile) |
-| [SECURITY_PLAN.md](SECURITY_PLAN.md) | Threats, the 27 controls, accepted risks, rules for the repository | Plan. Nine controls implemented, seven partly started |
+| [API_CONTRACT.md](API_CONTRACT.md) | All 37 planned endpoints with requests, responses, errors, examples | 13 of 37 endpoints implemented (health, place options, sign-up, login, profile, and lost and found reports: create, mine, view, edit, close) |
+| [SECURITY_PLAN.md](SECURITY_PLAN.md) | Threats, the 27 controls, accepted risks, rules for the repository | Plan. Nine controls implemented, eleven partly started |
 | [DECISIONS.md](DECISIONS.md) | Why each technical choice was made | Living |
-| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 210 automated tests so far (see results log) |
+| [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 350 automated tests so far (see results log) |
 | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | What exists and what is verified | Living |
-| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, first administrator, Postman) |
+| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, first administrator, Postman, reporting items) |
 | [USER_GUIDE.md](USER_GUIDE.md) | How to use the finished app | Outline only (written in Stage 19) |
 | [TEAM_RESPONSIBILITIES.md](TEAM_RESPONSIBILITIES.md) | Who does what (non-coding roles for the team) | Draft. Names needed |
-| [postman/](postman/) | Postman collection for trying the API by clicking (11 requests with built-in checks) | Living (extended each stage) |
+| [postman/](postman/) | Postman collection for trying the API by clicking (26 requests with built-in checks) | Living (extended each stage) |
 | [diagrams/](diagrams/) | Mermaid diagrams (GitHub draws them automatically) | Complete (Stage 1) |
 
 ## Documentation rules

@@ -186,6 +186,38 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 **Decision:** `documentation/postman/FINDIT.postman_collection.json` holds ready-made requests with built-in checks. Every stage that adds endpoints extends it. It was verified by running it with Newman (Postman's command-line runner) against a live server (10 requests, 17 checks, 0 failed; one optional admin request was added afterwards).
 **Why:** it lets the owner exercise and demonstrate the API with clicks, and it doubles as living documentation.
 
+## D-033: A place is a zone plus a detail, and it is only a hint
+**Status:** Accepted (Stage 5). *Replaces the Stage 1 plan for one flat list of placeholder "general locations".*
+**Finding:** the owner pointed out that items get moved from place to place, and supplied the real Babcock University names: many halls, many churches, several auditoriums, plenty of libraries and classrooms. One flat list of about 100 names would be unusable on a phone and would make the library and classrooms impossible to describe.
+**Decision:** a person first picks a **zone** (16 of them, such as male halls, female halls, churches, library, classrooms, auditoriums, cafeteria, gates). Each zone then asks for a detail in one of three ways: `LIST` (pick the hall or church), `REQUIRED_TEXT` (type which library or class number), or `OPTIONAL_TEXT`. Every list ends with "Not sure which", and there is a "Not sure, or somewhere else" zone. The report stores `generalLocation` (the zone code) and `locationDetail`. The whole definition lives in **one file**, `backend/src/config/campusLocations.js`, served to the apps by `GET /meta/options`, so adding a hall is a one-line change and the apps never hard-code places. No capacities and no people's names are kept.
+**Why:** it matches how people think ("I lost it near a male hostel, I think it was Winslow"), it keeps lists short, and it gives matching two honest signals (same zone, same entry in a list) without ever treating the place as proof.
+**Rules built on it:** the detail is checked together with the zone (a hall must come from that zone's list); when a report's zone changes, the old detail is dropped, never carried into the new zone; a detail that the zone requires cannot be cleared.
+**Matching (Stage 10):** same zone 6 points, plus 4 when both name the same list entry; a different place never rules a match out. Documented in [ARCHITECTURE.md](ARCHITECTURE.md).
+**Alternatives rejected:** free text only (cannot be matched or filtered); a map with GPS (needs phone permissions and a map service, which adds cost and privacy questions, and does not help for "which class").
+**Open:** Emerald Hall and Topaz Hall sit in an "Other halls" zone until the owner says whether they are male or female halls.
+
+## D-034: The date a thing was lost or found
+**Status:** Accepted (Stage 5)
+**Decision:** `dateOccurred` is sent as `YYYY-MM-DD` and stored as midnight UTC. It must be a real calendar date, **not more than one day in the future**, and **not more than 365 days ago**. The time of day is a separate field with four bands plus "unknown".
+**Why one day of slack:** the server clock is in UTC, but a phone in Nigeria is an hour ahead, so just after midnight local time a person's "today" is the server's "tomorrow". A strict "not in the future" rule would wrongly refuse honest reports. **Why 365 days:** a report older than a year is almost certainly a typing slip, and it keeps the matching window sensible.
+
+## D-035: Only the reporter can edit or close a report until the audit log exists
+**Status:** Accepted (Stage 5). *Narrows the API contract draft, which allowed administrators too.*
+**Decision:** in Stage 5 only the **owner** may edit or close a report. An administrator gets `403`, like any non-owner. Administrator edit, close and status changes are built in Stage 12 together with the audit log.
+**Why:** the security plan requires every administrator action to be recorded (S-21). Building the power before the record would create exactly the unaccountable staff action the plan is meant to prevent. Nothing the administrator does now is lost: they can already *see* every report, including the private fields and the reporter's contact details.
+**Consequence:** until Stage 12 a bad or abusive report can only be handled by its owner or directly in the database ([SECURITY_PLAN.md](SECURITY_PLAN.md) risk 15).
+
+## D-036: Who may see a report, and what Stage 5 leaves out on purpose
+**Status:** Accepted (Stage 5)
+**Decision:**
+- **Public view** (every logged-in person, including recovery officers): no private details, no storage location, no reporter, no close reason, and the reporter's id is never sent (only `isMine`).
+- **Owner view:** adds the private details, the storage location and the close information.
+- **Administrator view:** the owner view plus the reporter's name, email, phone number and contact preference.
+- A **`CLOSED`** report is `404` for everyone except its owner and administrators. A stranger who tries to edit or close someone else's closed report also gets `404`, not `403`, so a closed report cannot be confirmed to exist.
+- The private fields use `select: false` and are fetched by a **second query** only when the viewer is allowed to see them, so a coding slip in the public path cannot leak them.
+- Every response is built by a whitelist function (`toItemCard`, `toItemDetail`) that names each field.
+**Left out on purpose:** photos (Stage 9, because a photo link has to be checked against our own Cloudinary account); browsing and searching everyone's reports (`GET /items`, Stage 6); matching (Stage 10); administrator edit and close (D-035).
+
 ---
 
 ## How to add a decision

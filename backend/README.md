@@ -58,17 +58,23 @@ Stop the server with **Ctrl+C**.
 | GET | `/api/v1/users/me` | The logged-in user's profile |
 | PATCH | `/api/v1/users/me` | Change your name, phone number or contact preference |
 | PATCH | `/api/v1/users/me/password` | Change your password |
+| GET | `/api/v1/meta/options` | The allowed values for dropdowns, including the campus places (no login needed) |
+| POST | `/api/v1/items` | Report a lost or found item |
+| GET | `/api/v1/items/mine` | My own reports (newest first, paged) |
+| GET | `/api/v1/items/:id` | One report. Private fields only for its reporter and administrators |
+| PATCH | `/api/v1/items/:id` | Edit my report (only while it is open) |
+| PATCH | `/api/v1/items/:id/close` | Close my report |
 
 ## Folder map
 
 ```text
 src/
-├── config/        env.js (validates settings), db.js (MongoDB connection), constants.js
+├── config/        env.js (validates settings), db.js (MongoDB connection), constants.js, campusLocations.js (the campus places)
 ├── controllers/   Receive a request, send a response
 ├── middleware/    authenticate, authorize, validate, rateLimiters, cors, notFound, errorHandler
-├── models/        Database schemas (User so far)
+├── models/        Database schemas (User, Item)
 ├── routes/        Which URL goes to which controller
-├── services/      Business logic: passwords, tokens, sign-up and login, profile, first-admin seeding
+├── services/      Business logic: passwords, tokens, sign-up and login, profile, first-admin seeding, lost and found reports, status rules
 ├── validators/    Input rules (Zod; unknown fields are refused)
 ├── utils/         ApiError, respond, serializers
 ├── app.js         createApp(config): builds the Express app (does not listen)

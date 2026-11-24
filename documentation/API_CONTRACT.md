@@ -1,6 +1,6 @@
 # FINDIT: API Contract
 
-> **Status: 7 of the 37 endpoints are implemented and tested: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me` and `PATCH /users/me/password`. Everything else below is design, not implemented.** Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
+> **Status: 13 of the 37 endpoints are implemented and tested: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id` and `PATCH /items/:id/close`. Everything else below is design, not implemented.** (The Stage 5 item endpoints have passed their tests in the cloud container; the check on the owner's laptop is pending.) Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
 
 The mobile app and the admin dashboard use **the same API** with the same rules.
 
@@ -86,7 +86,7 @@ Every list endpoint accepts `page` (default 1) and `limit` (default 20, **maximu
 
 ### 1.5 Allowed values
 
-All enumerations (categories, colours, locations, statuses, …) are defined in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md#3-shared-value-lists-enumerations) and served live by `GET /meta/options`.
+All enumerations (categories, colours, locations, statuses, …) are defined in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md#3-shared-value-lists-enumerations) and served live by `GET /meta/options`. The list of campus places lives in one file, `backend/src/config/campusLocations.js` (see section 4.2).
 
 ### 1.6 Initial rate limits (tunable)
 
@@ -141,16 +141,17 @@ These are the objects returned inside `data`. **Fields marked 🔒 are private**
   "title": "Black wireless headphones",
   "category": "ELECTRONICS",
   "colour": "BLACK",
-  "generalLocation": "Main Library",
+  "generalLocation": "LIBRARY",
+  "locationDetail": "Main library, second floor",
   "dateOccurred": "2026-11-14T00:00:00.000Z",
   "status": "OPEN",
-  "image": "https://res.cloudinary.com/example-cloud/image/upload/findit/items/abc123.jpg",
+  "image": null,
   "isMine": false,
   "createdAt": "2026-11-14T10:05:00.000Z"
 }
 ```
 
-`image` is the first photo's URL or `null`. `isMine` tells the app whether to show edit buttons. The reporter's identity is **never** included.
+`generalLocation` is a **zone code** from `GET /meta/options` (`campusLocations`), and `locationDetail` is the extra detail for that zone (which hall, which library, which class), or `null`. It is only a hint about where the item was last seen or found, because items get moved. `image` is the first photo's URL, or `null`; **photos arrive in Stage 9, so it is always `null` for now**. `isMine` tells the app whether to show edit buttons. The reporter's identity is **never** included.
 
 ### 2.3 `ItemDetail`
 
@@ -158,13 +159,13 @@ Everything in `ItemCard`, plus:
 
 | Field | Notes |
 |---|---|
-| `description`, `brand`, `approximateTime`, `updatedAt` | Public |
-| `images` | `[{ "url", "publicId" }]` |
-| `handedToOffice` | FOUND reports only |
-| `privateDetails` 🔒 | Reporter and administrators only |
+| `description`, `brand`, `approximateTime`, `updatedAt` | Public. `brand` is `null` when not given |
+| `images` | `[{ "url", "publicId" }]`. **Always `[]` until Stage 9** |
+| `handedToOffice` | FOUND reports only (absent on LOST reports) |
+| `privateDetails` 🔒 | Reporter and administrators only. `null` when none |
 | `privateStorageLocation` 🔒 | FOUND only. Reporter and administrators only |
-| `reporter` 🔒 | `{ id, fullName, email, phoneNumber, contactPreference }`. **Administrators only** |
-| `closedAt`, `closeReason` 🔒 | Reporter and administrators |
+| `reporter` 🔒 | `{ id, fullName, email, phoneNumber, contactPreference }`. **Administrators only** (not even the reporter's own view repeats it) |
+| `closedAt`, `closeReason` 🔒 | Reporter and administrators. `null` until the report is closed |
 
 ### 2.4 `MatchResult`
 
@@ -256,8 +257,8 @@ Everything in `ItemCard`, plus:
 | 11 | GET | `/items` | Any logged-in user |
 | 12 | GET | `/items/mine` | Any logged-in user |
 | 13 | GET | `/items/:id` | Any logged-in user |
-| 14 | PATCH | `/items/:id` | Owner or admin |
-| 15 | PATCH | `/items/:id/close` | Owner or admin |
+| 14 | PATCH | `/items/:id` | Owner (administrator editing arrives in Stage 12, with the audit log) |
+| 15 | PATCH | `/items/:id/close` | Owner (administrator closing arrives in Stage 12, with the audit log) |
 | 16 | GET | `/items/:id/matches` | Owner or admin |
 | 17 | POST | `/claims` | Role `user` |
 | 18 | GET | `/claims/mine` | Role `user` |
@@ -307,7 +308,21 @@ Everything in `ItemCard`, plus:
 
 - **Purpose:** Give the apps the allowed values for dropdowns, so they never hard-code lists.
 - **Auth:** none (contains no private data). **Role:** none.
-- **Response `200`:** `data` has keys `categories`, `colours`, `timeBands`, `campusLocations`, `collectionLocations`, `contactPreferences`, `itemStatuses`, `claimStatuses`, `collectionStatuses`. Each is an array of strings.
+- **Response `200` (as implemented):** `data` has the keys `reportTypes`, `categories`, `colours`, `timeBands`, `contactPreferences`, `itemStatuses` (each an array of strings) and `campusLocations`. The claim-related lists (`claimStatuses`, `collectionStatuses`, `collectionLocations`) will be added in the stages that build claims and recovery.
+- **`campusLocations`** is an array of **zones**. A person picks a zone first, then (depending on the zone) gives a little more detail:
+
+```json
+{ "code": "MALE_HALLS", "label": "Male halls of residence",
+  "detail": { "mode": "LIST", "hint": "Which hall?", "options": ["Bethel Splendor", "Winslow", "...", "Not sure which"] } }
+```
+
+| `detail.mode` | The app shows | Rule on `locationDetail` |
+|---|---|---|
+| `LIST` | A pick-list (`options`). Used for halls, churches and auditoriums | **Required**, and must be one of `options` |
+| `REQUIRED_TEXT` | A short text box (`hint` says what to type). Used for the library and classrooms | **Required**, 3 to 80 characters |
+| `OPTIONAL_TEXT` | An optional short text box | Optional; if given, 3 to 80 characters |
+
+Every `LIST` ends with `"Not sure which"`, and there is a `NOT_SURE` zone, because items get moved and people are often unsure. The zones and their names live in one file, `backend/src/config/campusLocations.js`; editing it is the only change needed to add or rename a place.
 - **Example:** `curl "$API/meta/options"`
 
 ---
@@ -438,8 +453,8 @@ curl -X POST "$API/uploads/images" -H "Authorization: Bearer $TOKEN" \
 
 ### 8.1 `POST /items`
 
-- **Purpose:** Create a lost or found report. Status starts as `OPEN`. After saving, the system looks for matches.
-- **Auth:** required. **Role:** any.
+- **Purpose:** Create a lost or found report. Status always starts as `OPEN`, and the report is stored under the person who sent it. (Looking for matches arrives in Stage 10.)
+- **Auth:** required. **Role:** any (users, recovery officers and administrators can all report items).
 - **Request body:**
 
 ```json
@@ -450,25 +465,31 @@ curl -X POST "$API/uploads/images" -H "Authorization: Bearer $TOKEN" \
   "description": "Over-ear wireless headphones in a hard black case, found on a desk.",
   "colour": "BLACK",
   "brand": "Sony",
-  "generalLocation": "Main Library",
+  "generalLocation": "MALE_HALLS",
+  "locationDetail": "Winslow",
   "dateOccurred": "2026-11-14",
   "approximateTime": "AFTERNOON",
   "privateDetails": "Small scratch on left earcup; blue sticker inside case.",
-  "images": [{ "url": "https://res.cloudinary.com/example-cloud/image/upload/findit/items/abc123.jpg", "publicId": "findit/items/abc123" }],
   "handedToOffice": true,
   "privateStorageLocation": "Security Office, shelf B"
 }
 ```
 
-Required: `reportType`, `title`, `category`, `description`, `colour`, `generalLocation`, `dateOccurred`. `handedToOffice` and `privateStorageLocation` are allowed **only** for FOUND. Image URLs must belong to our Cloudinary account.
+Required: `reportType`, `title` (3 to 80 characters), `category`, `description` (10 to 1000), `colour`, `generalLocation`, `dateOccurred`. Optional: `brand`, `locationDetail` (required or not depending on the zone: see section 4.2), `approximateTime` (default `UNKNOWN`), `privateDetails`. `handedToOffice` and `privateStorageLocation` are allowed **only** for FOUND reports.
+
+Rules, all enforced by the backend:
+- **Date:** `dateOccurred` is `YYYY-MM-DD`, must be a real calendar date, **not more than one day in the future** (one day of slack because a phone in Nigeria can already be on tomorrow's date while the server clock is still on today's) and **not more than 365 days ago**.
+- **Place:** `generalLocation` must be a zone code, and `locationDetail` must satisfy that zone's rule (a hall must come from the zone's list; the library needs a short description).
+- **Unknown fields are refused**, not ignored. A request containing `status`, `reporterId`, `images`, `isMine`, `closedAt` and so on is a `400`, so a client cannot choose them.
+- **Photos are not accepted yet** (Stage 9); `images` is refused for now.
 
 - **Response `201`:** `data` = `{ "item": <ItemDetail> }` (owner view, so private fields are included)
-- **Errors:** `400 VALIDATION_ERROR` (missing field, value not in list, future date, foreign image URL, FOUND-only field on a LOST report)
+- **Errors:** `400 VALIDATION_ERROR` (missing field, value not in list, wrong place detail, future or too-old date, FOUND-only field on a LOST report, unknown field) · `401 UNAUTHENTICATED`
 - **Example:**
 
 ```bash
 curl -X POST "$API/items" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"reportType":"LOST","title":"Blue backpack","category":"BAGS","description":"Navy backpack with two front pockets.","colour":"BLUE","generalLocation":"Science Block","dateOccurred":"2026-11-13"}'
+  -d '{"reportType":"LOST","title":"Blue backpack","category":"BAGS","description":"Navy backpack with two front pockets.","colour":"BLUE","generalLocation":"CLASSROOM","locationDetail":"BBS Class 102","dateOccurred":"2026-11-13"}'
 ```
 
 ### 8.2 `GET /items`
@@ -495,8 +516,9 @@ curl -X POST "$API/items" -H "Authorization: Bearer $TOKEN" -H "Content-Type: ap
 
 - **Purpose:** "My reports": everything I reported, including closed reports.
 - **Auth:** required. **Role:** any.
-- **Query:** `reportType`, `status`, `page`, `limit`.
-- **Response `200`:** array of `ItemCard` (all with `isMine: true`), plus `meta`.
+- **Query:** `reportType`, `status`, `page` (default 1), `limit` (default 20, maximum 50). Any other parameter, a value not on the lists, a repeated parameter, or an object-style value such as `status[$ne]=OPEN` is a `400`.
+- **Response `200`:** array of `ItemCard` (all with `isMine: true`), newest first, plus `meta`. Only **your own** reports are listed, including `CLOSED` ones. Cards never contain private fields. A person with no reports gets an empty list, not an error.
+- **Errors:** `400 VALIDATION_ERROR` · `401 UNAUTHENTICATED`
 - **Example:** `curl "$API/items/mine?reportType=LOST" -H "Authorization: Bearer $TOKEN"`
 
 ### 8.4 `GET /items/:id`
@@ -504,17 +526,20 @@ curl -X POST "$API/items" -H "Authorization: Bearer $TOKEN" -H "Content-Type: ap
 - **Purpose:** One report in full.
 - **Auth:** required. **Role:** any. **What you see depends on who you are:** everyone gets the public fields; the reporter and administrators also get the 🔒 private fields; only administrators also get `reporter`.
 - **Response `200`:** `data` = `{ "item": <ItemDetail> }`
-- **Errors:** `400 VALIDATION_ERROR` (not a valid ID) · `404 NOT_FOUND` (no such report, or it is `CLOSED` and you are neither the reporter nor an administrator)
+- **Errors:** `400 VALIDATION_ERROR` (not a valid ID) · `401 UNAUTHENTICATED` · `404 NOT_FOUND` (no such report, or it is `CLOSED` and you are neither the reporter nor an administrator)
+- **Note:** a recovery officer sees the same public view as any other user. The private fields are not even loaded from the database for viewers who may not see them.
 - **Example:** `curl "$API/items/665f2a7e9b1d4a0012ab3501" -H "Authorization: Bearer $TOKEN"`
 
 ### 8.5 `PATCH /items/:id`
 
 - **Purpose:** Edit a report.
-- **Auth:** required. **Role:** the reporter, or an administrator.
-- **Editable fields** (send only what changes): `title`, `category`, `description`, `colour`, `brand`, `generalLocation`, `dateOccurred`, `approximateTime`, `privateDetails`, `images`, and (FOUND only) `handedToOffice`, `privateStorageLocation`. **Not editable:** `reportType`, `reporterId`, `status`.
-- **Rules:** the reporter may edit only while the status is `OPEN` or `POTENTIAL_MATCH`. An administrator may edit any report that is not `RETURNED`. Match-relevant edits re-run matching.
-- **Response `200`:** `data` = `{ "item": <ItemDetail> }`
-- **Errors:** `400 VALIDATION_ERROR` · `403 FORBIDDEN` (not the reporter or an admin) · `404 NOT_FOUND` · `409 CONFLICT` (report can no longer be edited)
+- **Auth:** required. **Role:** the reporter only. *(Administrator editing is designed but deliberately left to Stage 12, because every administrator action must be written to the audit log, which does not exist yet. For now an administrator gets `403`, like any other non-owner.)*
+- **Editable fields** (send only what changes; at least one is required): `title`, `category`, `description`, `colour`, `brand`, `generalLocation`, `locationDetail`, `dateOccurred`, `approximateTime`, `privateDetails`, and (FOUND only) `handedToOffice`, `privateStorageLocation`. **Not editable, and refused with `400` if sent:** `reportType`, `reporterId`, `status`, `images` and anything else not listed.
+- **Clearing a field:** send `null` for `brand`, `privateDetails`, `locationDetail` or `privateStorageLocation`. Required fields cannot be cleared.
+- **Changing the place** is checked as a whole. If you change `generalLocation`, the old `locationDetail` is **not** carried over (a hall name means nothing in a different zone), so send a new detail where the new zone needs one. Changing only `locationDetail` is checked against the current zone's rule, and a detail that the zone requires cannot be cleared.
+- **Status rule:** the reporter may edit only while the status is `OPEN` or `POTENTIAL_MATCH`. In any other status the reply is `409`.
+- **Response `200`:** `data` = `{ "item": <ItemDetail> }` (owner view)
+- **Errors:** `400 VALIDATION_ERROR` · `401 UNAUTHENTICATED` · `403 FORBIDDEN` (not the reporter) · `404 NOT_FOUND` (unknown id, or someone else's `CLOSED` report, which is invisible to you) · `409 CONFLICT` (report can no longer be edited)
 - **Example:**
 
 ```bash
@@ -525,11 +550,11 @@ curl -X PATCH "$API/items/665f2a7e9b1d4a0012ab3501" -H "Authorization: Bearer $T
 ### 8.6 `PATCH /items/:id/close`
 
 - **Purpose:** Close my report (for example "I found it myself").
-- **Auth:** required. **Role:** the reporter, or an administrator.
-- **Request body:** `{ "reason": "Found it in my bag." }` (`reason` optional, max 200)
-- **Rules:** the reporter can close only `OPEN` or `POTENTIAL_MATCH` reports. A found item that is `UNDER_VERIFICATION` or `APPROVED_FOR_RETURN` can be closed only by an administrator (and a note is required).
-- **Response `200`:** `data` = `{ "item": <ItemDetail> }`
-- **Errors:** `403 FORBIDDEN` · `404 NOT_FOUND` · `409 INVALID_STATE_TRANSITION`
+- **Auth:** required. **Role:** the reporter only. *(Administrator closing arrives in Stage 12 with the audit log. Until then an administrator gets `403`.)*
+- **Request body:** `{ "reason": "Found it in my bag." }` (`reason` optional, 1 to 200 characters; any other field is a `400`)
+- **Rules:** decided by the status rules in `backend/src/services/statusRules.js` (the single place that says which status changes are allowed). The reporter can close only `OPEN` or `POTENTIAL_MATCH` reports. A report that is `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN` or `RETURNED` cannot be closed by its reporter, and an already `CLOSED` report cannot be closed again. (Administrator closing of reports under verification arrives with Stage 12.)
+- **Response `200`:** `data` = `{ "item": <ItemDetail> }` with `status: "CLOSED"`, `closedAt` and `closeReason`. The closed report stays in the reporter's `/items/mine` list but disappears for everyone else.
+- **Errors:** `400 VALIDATION_ERROR` · `401 UNAUTHENTICATED` · `403 FORBIDDEN` · `404 NOT_FOUND` · `409 INVALID_STATE_TRANSITION`
 - **Example:**
 
 ```bash
@@ -894,5 +919,6 @@ The numbers are an example of the shape only.
 
 | Date | Change |
 |---|---|
+| 2026-11-24 | Stage 5 implemented `GET /meta/options` and 5 item endpoints (create, mine, get one, edit, close). Changes from the design: places are now **zones plus a detail** (`generalLocation` is a zone code, new field `locationDetail`; section 4.2); `images` and the `image` link are deferred to Stage 9; administrator edit and close are deferred to Stage 12 (audit log first); date rule is `YYYY-MM-DD`, at most one day ahead and 365 days back; `/meta/options` returns a smaller set of lists for now |
 | 2026-11-23 | Stage 4 implemented 6 endpoints (register, login, `/auth/me`, `/users/me`, profile update, password change). Changes from the design: rate limits redesigned (section 1.6: failed logins per address + email, register per address, general limit 600); section 1.7 added (token details); `profileImage` deferred to Stage 9; new password must differ from the current one |
 | 2026-11-22 | Initial design (Stage 1). 37 endpoints planned. Added beyond the original brief: `/health`, `/meta/options`, `PATCH /users/me/password`, `POST /uploads/images`, `GET /items/mine`, `POST /claims/:id/respond`, `PATCH /claims/:id/withdraw`, `GET /claims/mine`, `PATCH /notifications/read-all`, `PATCH /admin/items/:id/status`, `GET /admin/claims/:id`, `PATCH /admin/users/:id`, `GET /admin/audit-records`, `PATCH /admin/recovery-records/:id` |

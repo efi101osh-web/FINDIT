@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-24 (end of Stage 4)
+**Last updated:** 2026-11-24 (Stage 5 built and tested in the container; the check on the owner's laptop is pending)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -10,10 +10,10 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 4: Authentication and user management |
-| **State** | ✅ Stages 1 to 4 complete and verified: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
-| **Next stage** | Stage 5: Lost and found item reporting |
-| **What works today** | Everything from Stage 3, plus: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
+| **Current stage** | Stage 5: Lost and found item reporting |
+| **State** | ⚠️ **Stage 5 is built and verified in the container only** (350 automated tests, 34 deliberately planted bugs each caught, a live end-to-end run with Newman); **it needs the owner's laptop check** (steps in [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 6). ✅ Stages 1 to 4 are complete and verified: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
+| **Next stage** | Stage 6: Browsing and search (after the owner confirms Stage 5 on their laptop) |
+| **What works today** | Everything from Stage 4 (below), plus **Stage 5**: report a lost or found item, with the campus place chosen as a zone and a detail (which hall, which library, which class); see your own reports; open one report; edit and close your own report; the private details of a report are visible only to its reporter and to administrators (the reporter's contact details only to administrators); closed reports vanish for everyone else. **Stage 4**: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
 
 ## 2. Stages
@@ -24,7 +24,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 2 | Repository and environment setup | ✅ | Verified in the container and on the owner's Windows laptop |
 | 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
 | 4 | Authentication and user management | ✅ | Verified in the container and on the owner's laptop against Atlas. Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
-| 5 | Lost and found item reporting | ⬜ | |
+| 5 | Lost and found item reporting | ⚠️ | Built and tested in the container; needs the owner's laptop check. **Deferred on purpose:** photos (Stage 9), browsing everyone's reports (Stage 6), administrator edit and close (Stage 12, because they need the audit log first) |
 | 6 | Browsing and search | ⬜ | |
 | 7 | Mobile app foundation and screens | ⬜ | Decision D-019 (Expo SDK) to be settled here |
 | 8 | Connect mobile app to backend | ⬜ | |
@@ -45,14 +45,14 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **7**: `GET /health`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password` | Container (real MongoDB) and the owner's laptop (Atlas, through Postman) |
-| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **1**: `users` | Container (real MongoDB) and the owner's Atlas database (the real administrator and Postman test accounts) |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **13**: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id`, `PATCH /items/:id/close` | The first 7: container and the owner's laptop (Atlas, Postman). The 6 new ones: container only, **laptop check pending** |
+| Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **2**: `users`, `items` | `users`: container and the owner's Atlas database. `items`: container only (the laptop check will create it in Atlas) |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
-| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **9 implemented** (S-01 to S-04, S-07, S-14, S-15, S-16, S-24), **7 partial** (below) | Container: automated tests plus deliberately planted bugs |
-| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 93 | 32 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
-| Automated tests (Jest) | n/a | 210 (150 run by default, 60 need a real database) | `test:db`: 210 of 210 pass. Default `npm test`: 150 pass, 60 skipped (container). Owner's laptop: not yet run since Stage 3 |
-| Postman collection ([documentation/postman](postman)) | n/a | 11 requests, 19 checks | Newman against a live server: 0 failed. Owner's Postman app on Windows against Atlas: every request gave its expected result |
+| Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **9 implemented** (S-01 to S-04, S-07, S-14, S-15, S-16, S-24), **11 partial** (below) | Container: automated tests plus deliberately planted bugs |
+| Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 98 | 49 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12; T-SRC-04 and T-SRC-06 only on `/items/mine` until Stage 6) | Container |
+| Automated tests (Jest) | n/a | 350 (237 run by default, 113 need a real database) | `test:db`: 350 of 350 pass. Default `npm test`: 237 pass, 113 skipped (container). Owner's laptop: last run on the Stage 4 commit (140 passed, 60 skipped); the Stage 5 run is pending |
+| Postman collection ([documentation/postman](postman)) | n/a | 26 requests, 47 checks (7 walk-through requests and 8 refusals added for items) | Newman against a live server: 0 failed requests; the only 2 failed checks are the optional administrator login, which needs the owner's own admin details. The first 11 requests also ran in the owner's Postman against Atlas; the new 15 are not yet run there |
 
 **Implemented and tested** (S-15 and S-16 in Stage 3; the rest in Stage 4):
 - **S-01 Password hashing:** `bcryptjs`, cost 12 by default (never below 10 in production). The raw database value is a 60-character bcrypt hash.
@@ -64,9 +64,13 @@ This file is the **single source of truth for what actually exists and has been 
 - **S-24 Generic login errors:** identical replies for an unknown email and a wrong password; an unknown email still pays for a full password check (tested by counting the checks, not by timing).
 - **S-15 Security headers** and **S-16 CORS allow-list** (Stage 3).
 
-**Partially started** (none of these is complete):
+**Partially started** (none of these is complete; S-06, S-11, S-12 and S-13 were started in Stage 5):
 - **S-05 Role-based authorisation:** the `authorize` checkpoint is built and tested, but only against a stand-in route. The real admin routes arrive in Stage 12.
-- **S-08 Strict input validation** and **S-09 NoSQL-injection resistance:** done for sign-up, login and profile endpoints; each later endpoint adds its own.
+- **S-06 Ownership checks:** done for reports (only the reporter edits or closes; a stranger gets 403, and 404 for a closed report). Claims, notifications and recovery come later.
+- **S-08 Strict input validation** and **S-09 NoSQL-injection resistance:** done for sign-up, login, profile and the report endpoints; each later endpoint adds its own.
+- **S-11 Private fields never public:** done for reports (`select: false` plus whitelist serializers; reporter contact only for administrators; reporter id never sent). Claim evidence comes in Stage 11.
+- **S-12 Mass-assignment protection:** done for reports (`status`, `reporterId`, `reportType` on edit, `images`, `isMine`, `closedAt` are refused with 400).
+- **S-13 Status state machine:** the report transition table exists and is checked for every combination; closing uses it. Claim transitions come in Stage 11.
 - **S-17 Request size limits:** JSON bodies over 100 kB are refused. Upload and pagination limits come later.
 - **S-19 Secrets management:** `.gitignore` and `.env.example`; the server refuses to start without the database setting or the token key; secrets cannot appear when the config is printed; error text is redacted; placeholders left in the secret or seed password are refused. The push-time secret scan comes later.
 - **S-20 Safe error handling:** unexpected errors return a generic 500 with no detail; all known errors use the standard format.
@@ -199,6 +203,25 @@ Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, MongoDB 
 - **The `findit_app` and Atlas allow-list settings** are owner-reported, not independently checked.
 - **Why the server window sometimes returned to the prompt on its own.** The owner reported that `npm run dev` stopped by itself (twice, with no error message and no "Shutting down" line). The exit code was not captured, and the server stayed up long enough for every check. Suspected causes: an accidental Ctrl+C or window action, or watch mode. Watch item, see section 5.
 
+### Stage 5 (lost and found reporting), 2026-11-24
+Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.17. **No new dependencies were added** (the lock file did not change).
+
+| Check | Method | Result |
+|---|---|---|
+| All tests with a real database | `npm run test:db` | ✅ **350 of 350 pass** (20 suites) |
+| Plain `npm test` (as on the owner's laptop) | `npm test` | ✅ 237 pass, 113 skipped, 0 fail |
+| Tests can actually fail | **34 realistic bugs planted one at a time**: a closed report visible to strangers; strangers or administrators given the wrong view; the reporter's contact details shown to the reporter; everyone counted as the owner; 404 turned into 403; an administrator allowed to edit or close; "my reports" listing everyone's, oldest first, skipping the wrong page, rounding the page count down, ignoring each filter; editing allowed in any status; edit or close without an owner check; closing without the status rules; found-only fields accepted on a lost report; an old hall name carried into a new zone; `null` no longer clearing a field; the close time forgotten; private fields always sent or the storage location leaked on a lost report; `/items/mine` swallowed by `/items/:id`; creating without a login; unknown fields accepted on create and on edit; future dates allowed up to a month ahead; dates allowed ten years back; `select: false` removed from each of the three private fields; `reportType` or `reporterId` made changeable | ✅ **All 34 caught.** One slipped through the first time (nothing checked that the close reason is hidden by default), so a test was added and that bug was then caught. After the batches the source was confirmed identical: the full suite passed again |
+| Live end-to-end | Real server (`node src/server.js`) and a real throwaway MongoDB; the whole Postman collection run by Newman, then raw `curl` with a stranger, the reporter and a seeded administrator | ✅ 26 requests, 0 failed; 47 checks, with only the 2 optional administrator-login checks failing (no admin details were set in this run). A stranger saw no private details and no reporter; the administrator saw both; a stranger's edit, a stranger's close and an administrator's edit were all `403` |
+| Place options | `GET /meta/options` as served | ✅ 16 zones; male halls are a pick-list including Winslow; the library asks for a description |
+
+**Design decisions made in this stage** (see [DECISIONS.md](DECISIONS.md) D-033 to D-036): the location is a zone plus a detail; the date rules; administrator edit and close wait for the audit log; closed reports are invisible except to the owner and administrators.
+
+**Not verified in Stage 5**
+- **The owner's laptop and Atlas.** Nothing in this stage has run against the real Atlas database yet. The first run will create the `items` collection and its five indexes there.
+- **The place names.** They come from the owner's list of Babcock University places and were not independently checked. **Open question for the owner:** Emerald Hall and Topaz Hall are in the "Other halls" zone because their side (male or female) was not given; "Nyberg" is spelled from the owner's "Nybergr". See section 5.
+- **No performance test** of listing with many reports; the indexes exist, the volume is campus scale.
+- **Photos, browsing everyone's reports, administrator edit and close** do not exist yet (Stages 9, 6 and 12).
+
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
@@ -206,6 +229,8 @@ Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, MongoDB 
 | Network (owner), resolved | The MTN MiFi could not reach Atlas (a mobile network that changes the public address and may block the database port). On the phone's hotspot it works. For development, use the phone hotspot, and in Atlas Network Access use *Allow Access from Anywhere* while the address keeps changing (to be tightened before real use). A `MONGODB_TIMEOUT_MS` setting exists for slow connections | Owner, ongoing |
 | Server window stopping (watch) | `npm run dev` returned to the prompt by itself twice, silently. If it recurs, run `$LASTEXITCODE` right after it stops and report the number. `npm start` (no watch mode) is the steadier way to run it for testing | When it recurs, or in Stage 8 |
 | **Demo network plan** | The final demonstration needs the laptop to reach Atlas. Options to settle before Stage 20: a stable Wi-Fi or a hotspot that is known to work, or a local MongoDB on the laptop as an offline fallback (the app only needs a different `MONGODB_URI`; the Windows test copy is large, so this would be prepared deliberately). Ordinary app users will never connect to Atlas themselves, only the backend does | Stage 17 |
+| Places (owner) | Which side Emerald Hall and Topaz Hall belong to (male or female hall), and whether "Nyberg" is the right spelling. Until answered they sit in the "Other halls" zone in `backend/src/config/campusLocations.js` | Owner, before Stage 7 (the mobile app reads the list) |
+| Spam | Any logged-in user can create unlimited reports; only the general per-address limit applies ([SECURITY_PLAN.md](SECURITY_PLAN.md) risk 14) | Stage 12 or 16 |
 | D-019 | Which Expo SDK version to use | Stage 7 |
 | Audit | 18 moderate advisories in Jest's dev-only dependency chain (production dependencies: 0) | Stage 16 |
 | Risks 10 to 12 | Rate-limit counters in memory; no per-account lock-out across addresses; hosting behind a proxy needs `trust proxy` ([SECURITY_PLAN.md](SECURITY_PLAN.md) section 4) | Stages 16 and 17 |
@@ -218,18 +243,18 @@ CLAUDE.md                       Standing instructions for the AI assistant (carr
 README.md, .gitignore
 backend/
   package.json, package-lock.json, .env.example, .gitignore, README.md
-  src/config/                   env.js (validated settings; secrets hidden), db.js, constants.js
-  src/models/                   User.js, index.js (initModels)
-  src/validators/               fields.js, authValidators.js, userValidators.js (Zod, strict)
+  src/config/                   env.js (validated settings; secrets hidden), db.js, constants.js, campusLocations.js (the places)
+  src/models/                   User.js, Item.js, index.js (initModels)
+  src/validators/               fields.js, authValidators.js, userValidators.js, itemValidators.js (Zod, strict)
   src/middleware/               authenticate, authorize, validate, rateLimiters, cors, notFound, errorHandler
-  src/services/                 passwordService, tokenService, authService, userService, adminSeedService, index
-  src/controllers/, src/routes/ health, auth, users
+  src/services/                 passwordService, tokenService, authService, userService, adminSeedService, itemService, statusRules, index
+  src/controllers/, src/routes/ health, auth, users, items, meta
   src/utils/                    ApiError, respond, serializers
   src/app.js, src/server.js
   scripts/                      checkDatabase, testWithDatabase, generateSecret, seedAdmin
-  tests/                        210 tests (+ setup/ and helpers/)
-documentation/                  All documents, updated for Stage 4
-documentation/postman/          FINDIT.postman_collection.json (11 requests, 19 checks)
+  tests/                        350 tests (+ setup/ and helpers/)
+documentation/                  All documents, updated for Stage 5
+documentation/postman/          FINDIT.postman_collection.json (26 requests, 47 checks)
 ```
 
 `mobile-app/` and `admin-dashboard/` do not exist yet. They are created by their own tools in Stages 7 and 12.

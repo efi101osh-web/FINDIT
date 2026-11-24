@@ -1,8 +1,8 @@
 # FINDIT: Setup Guide
 
-> **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend) and Part 3 (create the database and run the server) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
+> **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend), Part 3 (create the database and run the server), Part 4 (first administrator), Part 5 (try the API with Postman) and Part 6 (report lost and found items) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** **Part 6 was tested in the container only (a live server, a real database and the Postman collection run with Newman: 26 requests, 0 failed; the laptop run is pending).** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -104,11 +104,13 @@ npm test
 ```text
 [tests] Database tests are SKIPPED. Run "npm run test:db" to include them (first run downloads MongoDB once; see the setup guide).
 
-Test Suites: 7 skipped, 7 passed, 7 of 14 total
-Tests:       60 skipped, 150 passed, 210 total
+Test Suites: 8 skipped, 12 passed, 12 of 20 total
+Tests:       113 skipped, 237 passed, 350 total
 ```
 
-The **60 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
+*(The numbers grow as the project grows. They are correct for the Stage 5 code; an older checkout shows smaller numbers.)*
+
+The **113 skipped** tests are the ones that need a real MongoDB. They are deliberately skipped on your laptop (the program they need is a large one-time download, see 3.10), and they are run by the assistant on every change. A skipped test is never counted as passed. What matters for you: **0 failed**.
 
 ### 2.5 If something goes wrong
 
@@ -281,7 +283,7 @@ If it is none of these, copy the **whole** terminal text and send it. (The tool 
 npm run test:db
 ```
 
-On success you will see `Tests: 210 passed, 210 total`. This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
+On success you will see `Tests: 350 passed, 350 total` (a smaller number on an older checkout). This test database is created in memory and thrown away afterwards. **It never touches your Atlas database.**
 
 ---
 
@@ -305,7 +307,7 @@ npm ci
 npm test
 ```
 
-You should see `Tests: 60 skipped, 150 passed, 210 total`, with 0 failed.
+You should see `Tests: 60 skipped, 150 passed, 210 total` on the Stage 4 code (later stages show larger numbers), with 0 failed.
 
 ### 4.2 Make a secret key for logins
 
@@ -411,14 +413,90 @@ Open the collection and go to its **Variables** tab. In the **Current value** co
 
 Every **Register** creates a harmless test account in your Atlas database `findit`. They are fake data, and you can delete them later in Atlas under **Browse Collections**.
 
+## Part 6. Report lost and found items (Stage 5)
+
+**Goal:** use the new item features by clicking in Postman: see the campus place options, report a lost item and a found item, look at your own reports, edit one, close one, and watch the safety rules refuse bad requests. The data you create is fake test data.
+
+**Uses:** your Atlas database. Use your **phone's hotspot** if the MiFi cannot reach Atlas (Part 3.9).
+
+### 6.1 Get the latest code
+
+In the `backend` folder, run these one at a time:
+
+```bash
+git pull
+```
+
+```bash
+npm ci
+```
+
+```bash
+npm test
+```
+
+**Success looks like:** `Tests: 113 skipped, 237 passed, 350 total` and **0 failed**. (If `git pull` complains about `package-lock.json`, run `git restore package-lock.json` and then `git pull` again.)
+
+### 6.2 Start the server
+
+```bash
+npm start
+```
+
+**Success looks like:** `Connected to MongoDB (database "findit").` then `FINDIT API is running (development mode).` Leave this window open. The first time, the server also creates the new `items` collection and its indexes in Atlas; that takes a second.
+
+### 6.3 Replace the Postman collection
+
+The collection grew from 11 to 26 requests. In Postman, delete the old **FINDIT API** collection (right-click it, then **Delete**), then **Import** `documentation/postman/FINDIT.postman_collection.json` again (Part 5.1).
+
+### 6.4 Run the new requests in order
+
+Send **0** to **5** again first (they sign you up as a new throwaway tester and log you in), then:
+
+| Request | What it does | What to look for |
+|---|---|---|
+| 6. See the place options | Asks the server which places exist | Status **200**. In the reply, `MALE_HALLS` has a list of halls and `LIBRARY` asks for a description |
+| 7. Report a LOST item | Reports lost headphones, last seen in the library | Status **201**. `status` is `OPEN`, `isMine` is `true`, and you can see your own `privateDetails` |
+| 8. Report a FOUND item | Reports found keys, near a male hall (Winslow) | Status **201**. `reportType` is `FOUND` |
+| 9. My reports | Lists the reports you made, newest first | Status **200**. Both reports are there, and **no** private details appear in the list |
+| 10. View one of my reports | Opens the found item in full | Status **200**. You see `privateStorageLocation` (only you and administrators can) |
+| 11. Edit my LOST report | Changes the brand, and moves the place to a female hall | Status **200**. Only the fields you sent changed |
+| 12. Close my LOST report | "Found it myself" | Status **200**. `status` is `CLOSED` |
+
+Then open the folder **Things that SHOULD be refused** and send the new requests at the bottom. A green **PASS** means the refusal **worked**: a future date, a status sent by the client, a hall that is not on the list, no login, closing twice, editing a closed report, an unknown report and an oversized page are all refused.
+
+If you use **Run collection**, the request named **Optional: log in as the ADMINISTRATOR** will show red unless you filled in your administrator details (Part 5.3). That is expected and not a problem with the code.
+
+### 6.5 Try the place rules yourself
+
+Open **7. Report a LOST item**, go to **Body**, and change `"generalLocation"` to `"MALE_HALLS"` and `"locationDetail"` to `"Nyberg"`, then **Send**. You should get **400**, with a message that the hall must be one of the listed places (Nyberg is a female hall). Change `"locationDetail"` to `"Winslow"` and **Send**: now it works. Put the request back to how it was before you move on, or re-import the collection.
+
+### 6.6 Look at the data in Atlas (optional)
+
+In Atlas, open your cluster, click **Browse Collections**, then database `findit`. A new collection **items** holds your test reports, next to **users**. The private details are stored there (it is your own database), but the API only shows them to the reporter and to administrators.
+
+### 6.7 If something goes wrong
+
+| What you see | Meaning and fix |
+|---|---|
+| `ECONNREFUSED` | The server is not running. Start it with `npm start` |
+| Request 7 or 8 returns **400** about `dateOccurred` | The request fills in today's date by itself. If you pasted your own body, use the form `2026-11-24` and a date within the last year, not later than tomorrow |
+| Requests 9 to 12 return **404** or the URL shows `{{foundItemId}}` | Requests 7 and 8 must be sent first in the same session, because they save the report ids. Send **7** and **8** again |
+| **11** or **12** returns **409** | The report was already closed. Send **7** again for a fresh one |
+| **401** | The token is missing. Send **2. Login** again |
+
+### 6.8 What to tell the assistant
+
+Please tell it: (1) the `npm test` result line, (2) whether requests 6 to 12 and the refusals all gave what the table says (or which one did not, with the reply text, **after replacing any email or token with `***`**), and (3) **which side Emerald Hall and Topaz Hall belong to (male or female hall)**, and whether "Nyberg" is the right spelling.
+
 ---
 
 ## Future parts (headings only; nothing written yet)
 
 | Part | Written in |
 |---|---|
-| 6. Create and run the mobile app in Expo Go | Stage 7 |
-| 7. Connect your phone to the backend (finding your laptop's IP address, Wi-Fi and firewall troubleshooting) | Stage 8 |
-| 8. Set up Cloudinary | Stage 9 |
-| 9. Run the admin dashboard | Stage 12 |
-| 10. Troubleshooting guide | Grows throughout; finalised in Stage 19 |
+| 7. Create and run the mobile app in Expo Go | Stage 7 |
+| 8. Connect your phone to the backend (finding your laptop's IP address, Wi-Fi and firewall troubleshooting) | Stage 8 |
+| 9. Set up Cloudinary | Stage 9 |
+| 10. Run the admin dashboard | Stage 12 |
+| 11. Troubleshooting guide | Grows throughout; finalised in Stage 19 |

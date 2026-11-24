@@ -1,6 +1,6 @@
 # FINDIT: Security Plan
 
-> **Status: 9 controls are implemented and tested (S-01 to S-04, S-07, S-14, S-15, S-16, S-24). 7 are partly started (marked `Partial`). The rest are `Planned`.** Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
+> **Status: 9 controls are implemented and tested (S-01 to S-04, S-07, S-14, S-15, S-16, S-24). 11 are partly started (marked `Partial`: S-05, S-06, S-08, S-09, S-11, S-12, S-13, S-17, S-19, S-20, S-23). The rest are `Planned`.** The Stage 5 results were tested in the cloud container; the check on the owner's laptop is pending. Every control starts as `Planned`. A control is changed to `Implemented` only after it exists in code **and** has a passing test or documented manual check, and the change is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). We never describe a control as present before that.
 
 ## 1. What we are protecting
 
@@ -24,14 +24,14 @@
 | S-03 | JWT authentication | Anonymous access | Signed token; secret from `.env` (at least 32 random bytes); expiry set | 4 | Implemented (Stage 4) |
 | S-04 | Fresh user lookup per request | A suspended or demoted user keeps access | Token holds only the user ID; user reloaded each request | 4 | Implemented (Stage 4) |
 | S-05 | Role-based authorisation | Privilege escalation | `authorize(...roles)` middleware on every protected route | 4, 12 | Partial (Stage 4: middleware done and tested; admin routes arrive in Stage 12) |
-| S-06 | Ownership checks | Reading or changing someone else's data | Checked in services (own item, own claim, own notification, assigned recovery) | 5, 11, 13, 14 | Planned |
+| S-06 | Ownership checks | Reading or changing someone else's data | Checked in services (own item, own claim, own notification, assigned recovery) | 5, 11, 13, 14 | Partial (Stage 5: reports. Only the reporter can edit or close; another user gets 403, and 404 for a closed report they may not see. Claims, notifications and recovery come later) |
 | S-07 | No role in public registration | Self-made admin | Role is never read from the request. Strict schema rejects it. Admins come from seed script or an admin promoting a user | 4 | Implemented (Stage 4) |
-| S-08 | Strict input validation | Bad data, injection | Zod schemas on body, query and params. Unknown fields rejected. Length and enum limits | 4 on | Partial (Stage 4: sign-up, login and profile endpoints; every later endpoint adds its own) |
-| S-09 | NoSQL-injection resistance | Operators like `{"$gt": ""}` smuggled into queries | Validation only allows plain strings and known types. Queries are built from validated values, never from raw `req.body`/`req.query` | 4 on | Partial (Stage 4: sign-up, login and profile endpoints) |
+| S-08 | Strict input validation | Bad data, injection | Zod schemas on body, query and params. Unknown fields rejected. Length and enum limits | 4 on | Partial (Stages 4 and 5: sign-up, login, profile and the report endpoints; every later endpoint adds its own) |
+| S-09 | NoSQL-injection resistance | Operators like `{"$gt": ""}` smuggled into queries | Validation only allows plain strings and known types. Queries are built from validated values, never from raw `req.body`/`req.query` | 4 on | Partial (Stages 4 and 5: sign-up, login, profile and report endpoints; operator-style values such as `status[$ne]=OPEN` are refused with 400 and tested) |
 | S-10 | Safe keyword search | Regex injection and slow patterns | User search text is **escaped** before use in a regex; length limited to 60 | 6 | Planned |
-| S-11 | Private fields never public | Data leaks | `select: false` on private fields **plus** whitelist serializers. Tests assert private fields are absent from public responses | 5, 11 | Planned |
-| S-12 | Mass-assignment protection | Client sets `status`, `reporterId`, etc. | Update schemas whitelist editable fields. Status only changes via `statusRules.js` | 5 | Planned |
-| S-13 | Status state machine | Illegal workflow jumps (e.g. skipping verification) | Single file of allowed transitions; others return 409 | 5, 11 | Planned |
+| S-11 | Private fields never public | Data leaks | `select: false` on private fields **plus** whitelist serializers. Tests assert private fields are absent from public responses | 5, 11 | Partial (Stage 5: reports. Private fields are `select: false` and loaded only for the reporter or an administrator; the reporter's contact details only for an administrator; the reporter's id is never sent. Tested with planted-bug checks. Claim evidence comes in Stage 11) |
+| S-12 | Mass-assignment protection | Client sets `status`, `reporterId`, etc. | Update schemas whitelist editable fields. Status only changes via `statusRules.js` | 5 | Partial (Stage 5: reports. Clients cannot send `status`, `reporterId`, `reportType` (on edit), `images`, `isMine` or `closedAt`: each is a 400 and nothing is saved. Other resources add their own) |
+| S-13 | Status state machine | Illegal workflow jumps (e.g. skipping verification) | Single file of allowed transitions; others return 409 | 5, 11 | Partial (Stage 5: the report transition table is built and checked against every combination of type, status and actor; closing uses it. Claim transitions come in Stage 11) |
 | S-14 | Rate limiting | Password guessing, spam, floods | Limits in [API_CONTRACT.md](API_CONTRACT.md#16-initial-rate-limits-tunable) | 4 on | Implemented (Stage 4) |
 | S-15 | Security headers | Common browser attacks | Helmet | 3 | Implemented (Stage 3) |
 | S-16 | CORS allow-list | Other websites calling the API from a browser | Only origins listed in `CORS_ORIGINS` | 3 | Implemented (Stage 3) |
@@ -79,6 +79,8 @@ These are deliberate trade-offs. They will be repeated honestly in the final doc
 11. **No per-account lock-out across addresses.** Login attempts are limited per address and email together, so one student's typos never lock out others on the same Wi-Fi. A guesser who uses many different addresses against one account is slowed only by the password policy and the cost of bcrypt. A true per-account lock-out would let anyone lock out a victim, so it is not used. Revisited in Stage 16.
 12. **Behind a hosting proxy the server must be told to trust it.** Otherwise every user appears to come from the proxy's one address and shares the same limits. To be configured when hosting (Stage 17).
 13. **Passwords are limited to 72 bytes** (a bcrypt limit), and the limit is enforced, not silently applied.
+14. **No per-user limit on creating reports.** Any logged-in user can post many reports; only the general limit per address applies (600 requests per 15 minutes). Spam is limited but not prevented. A per-user daily cap and administrator tools for removing spam are considered for Stage 12 and 16.
+15. **Administrators cannot yet edit or close other people's reports.** This is deliberate (their actions must be audited first, Stage 12), so it is a missing feature, not a hole: until then a bad report can only be handled by its owner or directly in the database.
 
 ## 5. Rules for working on this project
 

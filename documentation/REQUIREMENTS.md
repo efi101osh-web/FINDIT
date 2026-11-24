@@ -51,10 +51,10 @@
 | ITEM-02 | A user can submit a **found** report with the same fields, plus whether it was handed to an authorised office and an optional private storage location | Must | 5 |
 | ITEM-03 | Up to 3 photos per report; JPEG, PNG or WebP; maximum 5 MB each; type verified by file content, not just name | Must | 9 |
 | ITEM-04 | Public item responses never include private fields (private details, private storage location, reporter identity) | Must | 5 |
-| ITEM-05 | The reporter can edit their report while it is `OPEN` or `POTENTIAL_MATCH`. Fields that identify or move the report (type, owner, status) can never be edited this way | Must | 5 |
+| ITEM-05 | The reporter can edit their report while it is `OPEN` or `POTENTIAL_MATCH`. Fields that identify or move the report (type, owner, status) can never be edited this way. *(Administrator editing arrives in Stage 12 with the audit log.)* | Must | 5 |
 | ITEM-06 | The reporter can close their own report, unless a found item is under verification or approved for return | Must | 5 |
 | ITEM-07 | All status changes follow the state machine; illegal transitions are rejected | Must | 5, 11 |
-| ITEM-08 | The event date cannot be in the future. Category, colour, location and time band must come from the allowed lists | Must | 5 |
+| ITEM-08 | The event date cannot be in the future (one day of slack for clocks running ahead) or more than a year ago. Category, colour, location zone and time band must come from the allowed lists, and the location detail must fit its zone (a hall from the list, a short description for the library or a classroom) | Must | 5 |
 | ITEM-09 | Found-item reporters are told to hand items to the authorised office. The system never arranges private exchanges | Must | 5, 7 |
 
 ### 2.4 Browsing and search (BRW)
@@ -184,7 +184,7 @@ Interactive campus map · QR codes · AI image similarity · real-time chat · p
 
 ## 6. Assumptions
 
-- One campus. A list of general campus locations is kept in a single configuration file and edited to match your campus (Stage 5).
+- One campus (Babcock University, Ilishan-Remo, with the Iperu-Remo campus). The places are kept in a single configuration file, `backend/src/config/campusLocations.js`, as zones (male halls, female halls, churches, library, classrooms and so on) that ask for a little more detail. A location is only a hint, because items get moved. (Built in Stage 5.)
 - Authorised collection offices are a small configured list (Stage 13).
 - "Contact preference" (in-app, email or phone) tells *staff* how to reach a user. It never exposes contact details to other users.
 - Data in development is fake test data only.

@@ -5,8 +5,9 @@
 // its index exists, so we wait for it before accepting any requests.
 
 const User = require('./User');
+const Item = require('./Item');
 
-const models = { User };
+const models = { User, Item };
 
 async function initModels() {
   await Promise.all(Object.values(models).map((model) => model.init()));

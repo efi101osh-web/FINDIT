@@ -39,6 +39,10 @@ class ApiError extends Error {
     return new ApiError(404, 'NOT_FOUND', message);
   }
 
+  static invalidTransition(message) {
+    return new ApiError(409, 'INVALID_STATE_TRANSITION', message);
+  }
+
   static conflict(message, details) {
     return new ApiError(409, 'CONFLICT', message, details);
   }

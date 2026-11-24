@@ -226,7 +226,7 @@ LOST reports only ever use `OPEN`, `POTENTIAL_MATCH`, `RETURNED`, `CLOSED`.
 | Description keywords | 15 | The same overlap idea on keywords from title + description: `15 × shared keywords ÷ keywords in the shorter set`, ignoring words shorter than 3 letters |
 | Colour | 15 | Same colour 15. If either is `OTHER` or `MULTICOLOUR`, 5. Different colour 0 |
 | Brand | 10 | Both given and equal (ignoring case) 10. Otherwise 0 (a missing brand is neutral, never a penalty) |
-| Location | 10 | Same general location 10, otherwise 0 |
+| Location | 10 | Same zone 6 (not for the `NOT_SURE` zone), plus 4 more when both reports name the same entry of a list (the same hall, church or auditorium; "Not sure which" earns nothing). Different zones 0. A place can **never rule a match out**, because items get moved |
 | Date | 10 | Days apart: 0–1 → 10, 2–3 → 7, 4–7 → 4, 8–14 → 2, more → 0 |
 
 **Step 3: bands and thresholds (initial values, tuned at Stage 10 with demo data):**
@@ -283,6 +283,14 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 - Controllers read only `req.valid` (the cleaned, checked input), never the raw `req.body`.
 - Checks run in this order on login: rate limit, input shape, find the user, password, and only then the suspension check (so a guesser cannot learn that an account exists or is suspended).
 - The first administrator is created by `npm run seed:admin`, which reads the email and password from the owner's private `.env`.
+
+**As implemented in Stage 5 (lost and found reports)**
+- Files: `models/Item.js`; `services/itemService.js` (all the rules: who may see, edit or close what), `statusRules.js` (the one table of allowed status changes, with an exhaustive test); `config/campusLocations.js` (the places, in one editable file); `validators/itemValidators.js`; `controllers/itemController.js`, `metaController.js`; `routes/itemRoutes.js`; `toItemCard` and `toItemDetail` in `utils/serializers.js`.
+- **Two shapes of every report.** The *card* (lists) and the *detail* (one report) are built by whitelist functions that name every field they send, so a field added to the database later is never sent by accident. The private fields are `select: false` and are loaded by a second query **only** for the reporter or an administrator.
+- **Who sees what:** everyone logged in sees the public view; the reporter also sees their private fields; an administrator also sees the reporter's contact details; a `CLOSED` report is a `404` for everyone else. The reporter's id is never sent, only `isMine`.
+- **Owner-only edit and close.** Administrator edit and close need an audit record first, so they arrive with the audit log in Stage 12. Until then an administrator gets `403`, like any other non-owner.
+- **Route order:** `/items/mine` is registered before `/items/:id` (a test proves it).
+- **Photos** are not part of a report yet (Stage 9). **Browse and search** over everyone's reports (`GET /items`) is Stage 6.
 
 ---
 
