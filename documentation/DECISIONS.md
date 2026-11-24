@@ -218,6 +218,18 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 - Every response is built by a whitelist function (`toItemCard`, `toItemDetail`) that names each field.
 **Left out on purpose:** photos (Stage 9, because a photo link has to be checked against our own Cloudinary account); browsing and searching everyone's reports (`GET /items`, Stage 6); matching (Stage 10); administrator edit and close (D-035).
 
+## D-037: How browse and search work
+**Status:** Accepted (Stage 6)
+**Decision:**
+- **Words, not phrases.** The text is split into words (at most 5, repeats removed). **Every word must match** somewhere, in any order and in any of the public fields, so "black headphones" finds a report that says "headphones" in the title and "black" in the description. Matching is partial (`head` finds "headphones") and ignores letter case.
+- **Escaped, never a pattern.** Each word is escaped before it is used, so `.` `*` `(` and the rest are ordinary letters. That removes both "match everything" tricks and slow patterns (tested, including the classic `(a+)+$`).
+- **Public fields only:** title, description, brand, location detail, and the *name* of the zone (so "residence" or "library" finds reports by place). The private details, the storage location, the close reason and the reporter are never searched, because a search that could read them would let a dishonest person guess a secret one word at a time.
+- **Status:** the default list shows active reports; `RETURNED` only when asked for; `CLOSED` is refused with a clear `400` instead of silently ignored, and a second safety belt makes any non-browsable status match nothing. Your own closed reports are in `GET /items/mine`, not here.
+- **Dates and sorting:** date filters are inclusive at both ends and may be any real date. Four sorts; the report id is the last tie-breaker so paging never repeats or skips a report even when two reports were made at the same moment.
+- **Strict query:** unknown, repeated and operator-style parameters are refused.
+**Why not MongoDB `$text`:** it does not match partial words (D-011). **Why not search the colour and category names:** they have their own filters, and the contract lists the searched fields.
+**Cost:** a partial-word search cannot use an index. At campus scale that is fine; see [SECURITY_PLAN.md](SECURITY_PLAN.md) risk 16.
+
 ---
 
 ## How to add a decision

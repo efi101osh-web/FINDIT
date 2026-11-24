@@ -60,6 +60,15 @@ const ITEM_STATUSES = Object.freeze({
   CLOSED: 'CLOSED',
 });
 const ITEM_STATUS_LIST = Object.freeze(Object.values(ITEM_STATUSES));
+// What the public browse list may show. "Active" reports are shown by default; RETURNED may be
+// asked for. CLOSED reports are never in the public list (only their owner and administrators see them).
+const ACTIVE_ITEM_STATUSES = Object.freeze([
+  ITEM_STATUSES.OPEN,
+  ITEM_STATUSES.POTENTIAL_MATCH,
+  ITEM_STATUSES.UNDER_VERIFICATION,
+  ITEM_STATUSES.APPROVED_FOR_RETURN,
+]);
+const BROWSABLE_ITEM_STATUSES = Object.freeze([...ACTIVE_ITEM_STATUSES, ITEM_STATUSES.RETURNED]);
 
 module.exports = {
   REPORT_TYPES,
@@ -68,6 +77,8 @@ module.exports = {
   TIME_BANDS,
   ITEM_STATUSES,
   ITEM_STATUS_LIST,
+  ACTIVE_ITEM_STATUSES,
+  BROWSABLE_ITEM_STATUSES,
   ROLES,
   ROLE_LIST,
   ACCOUNT_STATUSES,

@@ -3,7 +3,8 @@
 // The rules for lost and found reports: creating, viewing, listing your own, editing, closing.
 //
 // Who may do what (see documentation/REQUIREMENTS.md section 4):
-//   * any logged-in user may create a report and list their own
+//   * any logged-in user may create a report, list their own, and browse and search everyone's
+//     PUBLIC cards (never closed reports, never private fields)
 //   * anyone logged in may view a report, but only its OWNER or an ADMINISTRATOR sees the
 //     private fields, and only an administrator sees the reporter's contact details
 //   * a CLOSED report is invisible to everyone except its owner and administrators
@@ -17,6 +18,7 @@ const { toItemCard, toItemDetail } = require('../utils/serializers');
 const { checkLocation } = require('../config/campusLocations');
 const { ITEM_STATUSES, ROLES } = require('../config/constants');
 const { ACTOR, assertItemTransition, OWNER_EDITABLE_STATUSES } = require('./statusRules');
+const { buildBrowseFilter, sortFor } = require('./itemSearch');
 
 const PRIVATE_FIELDS = '+privateDetails +privateStorageLocation +closeReason';
 const EDITABLE_FIELDS = [
@@ -65,6 +67,20 @@ function createItemService() {
       const full = await loadOrFail(id, PRIVATE_FIELDS);
       const reporter = admin ? await User.findById(item.reporterId).select('fullName email phoneNumber contactPreference') : null;
       return toItemDetail(full, user._id, { includePrivate: true, reporter });
+    },
+
+    /** Browse and search everyone's reports: public cards only. CLOSED reports are never included. */
+    async browse(user, query) {
+      const filter = buildBrowseFilter(query);
+      const { page, limit, sort } = query;
+      const [items, total] = await Promise.all([
+        Item.find(filter).sort(sortFor(sort)).skip((page - 1) * limit).limit(limit),
+        Item.countDocuments(filter),
+      ]);
+      return {
+        items: items.map((item) => toItemCard(item, user._id)),
+        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
     },
 
     async listMine(user, { reportType, status, page, limit }) {

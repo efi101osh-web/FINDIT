@@ -60,6 +60,7 @@ Stop the server with **Ctrl+C**.
 | PATCH | `/api/v1/users/me/password` | Change your password |
 | GET | `/api/v1/meta/options` | The allowed values for dropdowns, including the campus places (no login needed) |
 | POST | `/api/v1/items` | Report a lost or found item |
+| GET | `/api/v1/items` | Browse and search everyone's active reports (public cards only; filters, sorting, paging) |
 | GET | `/api/v1/items/mine` | My own reports (newest first, paged) |
 | GET | `/api/v1/items/:id` | One report. Private fields only for its reporter and administrators |
 | PATCH | `/api/v1/items/:id` | Edit my report (only while it is open) |
@@ -74,7 +75,7 @@ src/
 ├── middleware/    authenticate, authorize, validate, rateLimiters, cors, notFound, errorHandler
 ├── models/        Database schemas (User, Item)
 ├── routes/        Which URL goes to which controller
-├── services/      Business logic: passwords, tokens, sign-up and login, profile, first-admin seeding, lost and found reports, status rules
+├── services/      Business logic: passwords, tokens, sign-up and login, profile, first-admin seeding, lost and found reports, browse and search, status rules
 ├── validators/    Input rules (Zod; unknown fields are refused)
 ├── utils/         ApiError, respond, serializers
 ├── app.js         createApp(config): builds the Express app (does not listen)

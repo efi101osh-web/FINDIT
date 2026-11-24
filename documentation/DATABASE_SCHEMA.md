@@ -137,7 +137,7 @@ Fields that exist only for FOUND (`handedToOffice`, `privateStorageLocation`) ar
 | `{ dateOccurred: -1 }` | Date filters and date sorting |
 | `{ generalLocation: 1 }` | Location (zone) filter |
 
-**Search design.** Keyword search uses a case-insensitive, *escaped* regular-expression match on `title`, `description`, `brand`, the zone's label and `locationDetail`. This is chosen over MongoDB `$text` search because `$text` does not match partial words (typing "head" would not find "headphones"). The search text is always escaped, so it can never act as a pattern. For campus-scale data this is fast enough. See [DECISIONS.md](DECISIONS.md) D-011.
+**Search design (implemented in Stage 6).** The typed text is split into words (at most 5). Each word, case-insensitively and *escaped* so it can never act as a pattern, must match at least one of `title`, `description`, `brand` or `locationDetail`, or be part of the **name** of the report's zone (the zone is stored as a code, so the words are first matched against the zone names and the matching codes are used). All words must match. This is chosen over MongoDB `$text` search because `$text` does not match partial words (typing "head" would not find "headphones"). Private fields (`privateDetails`, `privateStorageLocation`, `closeReason`) and the reporter's details are never part of a search. A pattern search cannot use an index, so it scans the reports left after the status, type, category and colour conditions; for campus-scale data this is fast. See [DECISIONS.md](DECISIONS.md) D-011 and D-037.
 
 ---
 

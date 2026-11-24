@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "FINDIT API",
-    "description": "Requests for trying the FINDIT backend. Start the backend first (npm run dev), then run the requests in order: 0 to 13. Each request has tests: a green \"PASS\" in the Test Results tab means the API behaved correctly. The folder at the end contains requests that SHOULD be refused. For those, a \"PASS\" means the refusal worked.",
+    "description": "Requests for trying the FINDIT backend. Start the backend first (npm run dev), then run the requests in order: 0 to 16. Each request has tests: a green \"PASS\" in the Test Results tab means the API behaved correctly. The folder at the end contains requests that SHOULD be refused. For those, a \"PASS\" means the refusal worked.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -473,6 +473,92 @@
       ]
     },
     {
+      "name": "13. Browse everyone's reports",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/items"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('the found keys I reported are in the list', () => pm.expect(body.data.map(c => c.id)).to.include(pm.collectionVariables.get('foundItemId')));",
+              "pm.test('the report I closed is NOT in the public list', () => pm.expect(body.data.map(c => c.id)).to.not.include(pm.collectionVariables.get('lostItemId')));",
+              "pm.test('cards never show private details, storage places or who reported them', () => { const text = pm.response.text(); pm.expect(text).to.not.include('privateDetails'); pm.expect(text).to.not.include('privateStorageLocation'); pm.expect(text).to.not.include('Security Office'); pm.expect(text).to.not.include('reporter'); });",
+              "pm.test('paging information is included', () => pm.expect(body.meta.total).to.be.at.least(1));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Search by PART of a word (finds the keys)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/items?q=lanyar"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('\"lanyar\" finds \"lanyard\"', () => pm.expect(pm.response.json().data.map(c => c.id)).to.include(pm.collectionVariables.get('foundItemId')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Filter and sort: found keys, newest event first",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/items?reportType=FOUND&category=KEYS&sort=eventNewest&limit=5"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const cards = pm.response.json().data;",
+              "pm.test('every card is a FOUND report in the KEYS category', () => cards.forEach(c => { pm.expect(c.reportType).to.eql('FOUND'); pm.expect(c.category).to.eql('KEYS'); }));",
+              "pm.test('at most 5 cards (the page size I asked for)', () => pm.expect(cards.length).to.be.at.most(5));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Search with pattern characters (treated as plain text)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/items?q=%28.%2A%29%2B%24"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK: no error', () => pm.response.to.have.status(200));",
+              "pm.test('nothing matches the text (.*)+$ and it is NOT treated as a pattern that matches everything', () => pm.expect(pm.response.json().data).to.eql([]));"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "Optional: log in as the ADMINISTRATOR (fill adminEmail and adminPassword in the collection Variables first)",
       "request": {
         "method": "POST",
@@ -875,6 +961,101 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('400: the page size is capped at 50', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search with a one-letter word (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/items?q=a"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400: search text must be at least 2 characters', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().error.details.map(d => d.field)).to.include('q'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask the public list for CLOSED reports (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/items?status=CLOSED"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400: closed reports are never public', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask the public list for 500 reports at once (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/items?limit=500"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400: the page size is capped at 50', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter with an operator trick (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/items?category[$ne]=KEYS"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400: operator-style filters are refused', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Date range the wrong way round (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/items?dateFrom=2026-12-31&dateTo=2026-01-01"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400: dateTo must not be earlier than dateFrom', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().error.details.map(d => d.field)).to.include('dateTo'); });"
                 ]
               }
             }

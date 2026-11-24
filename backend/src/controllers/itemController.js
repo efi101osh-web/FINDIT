@@ -7,6 +7,10 @@ function createItemController({ items }) {
     async create(req, res) {
       sendSuccess(res, { item: await items.create(req.user, req.valid.body) }, { status: 201 });
     },
+    async list(req, res) {
+      const { items: list, meta } = await items.browse(req.user, req.valid.query);
+      sendSuccess(res, list, { meta });
+    },
     async get(req, res) {
       sendSuccess(res, { item: await items.getById(req.user, req.valid.params.id) });
     },

@@ -5,7 +5,7 @@
 // `reportType` (on an edit) and have them obeyed.
 
 const { z } = require('zod');
-const { REPORT_TYPES, CATEGORIES, COLOURS, TIME_BANDS, ITEM_STATUS_LIST } = require('../config/constants');
+const { REPORT_TYPES, CATEGORIES, COLOURS, TIME_BANDS, ITEM_STATUS_LIST, BROWSABLE_ITEM_STATUSES } = require('../config/constants');
 const { ZONE_CODES, checkLocation } = require('../config/campusLocations');
 
 const oneOf = (values, label) => z.enum(values, { error: `${label} must be one of: ${values.join(', ')}.` });
@@ -127,4 +127,41 @@ const listMineQuery = z.strictObject({
   limit: z.coerce.number({ error: 'limit must be a number.' }).int('limit must be a whole number.').min(1, 'limit starts at 1.').max(50, 'limit can be at most 50.').default(20),
 });
 
-module.exports = { createItemSchema, updateItemSchema, closeItemSchema, idParams, listMineQuery };
+// ---- GET /items: browse and search everyone's (public) reports ---------------------------------
+const SORTS = Object.freeze(['newest', 'oldest', 'eventNewest', 'eventOldest']);
+
+// A date used as a FILTER: any real calendar date (the "not in the future" rules are for new reports only).
+const filterDate = (label) =>
+  z
+    .string({ error: `${label} must be text in the form YYYY-MM-DD.` })
+    .trim()
+    // abort: if the format is wrong, say so once and stop (no second "does not exist" message)
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: `${label}: use the date format YYYY-MM-DD, for example 2026-11-14.`, abort: true })
+    .refine(isRealCalendarDate, `${label}: that date does not exist.`)
+    .transform((value) => new Date(`${value}T00:00:00.000Z`));
+
+const page = z.coerce.number({ error: 'page must be a number.' }).int('page must be a whole number.').min(1, 'page starts at 1.').max(100000).default(1);
+const limit = z.coerce.number({ error: 'limit must be a number.' }).int('limit must be a whole number.').min(1, 'limit starts at 1.').max(50, 'limit can be at most 50.').default(20);
+
+const listItemsQuery = z
+  .strictObject({
+    q: text('Search text', 2, 60).optional(),
+    reportType: reportType.optional(),
+    category: category.optional(),
+    colour: colour.optional(),
+    location: generalLocation.optional(),
+    // CLOSED is deliberately not allowed: closed reports are never public.
+    status: oneOf(BROWSABLE_ITEM_STATUSES, 'Status').optional(),
+    dateFrom: filterDate('dateFrom').optional(),
+    dateTo: filterDate('dateTo').optional(),
+    sort: oneOf(SORTS, 'Sort').default('newest'),
+    page,
+    limit,
+  })
+  .refine((value) => !value.dateFrom || !value.dateTo || value.dateFrom <= value.dateTo, {
+    path: ['dateTo'],
+    error: 'dateTo must not be earlier than dateFrom.',
+    when: (payload) => payload.issues.length === 0,
+  });
+
+module.exports = { createItemSchema, updateItemSchema, closeItemSchema, idParams, listMineQuery, listItemsQuery, SORTS };

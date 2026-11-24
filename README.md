@@ -6,20 +6,20 @@ FINDIT is a connected system that helps campus users report lost and found items
 
 | Part | Technology | State |
 |---|---|---|
-| **Backend API** | Node.js, Express, MongoDB, JWT | Foundation, database, accounts and login, and lost and found reporting (see below) |
+| **Backend API** | Node.js, Express, MongoDB, JWT | Foundation, database, accounts and login, lost and found reporting, and browse and search (see below) |
 | **Mobile app** | React Native, Expo Go | Not started (Stage 7) |
 | **Admin dashboard** | React, Vite | Not started (Stage 12) |
 
 ## Current status
 
-**Stages 1 to 4 of 20 are complete and verified. Stage 5 (lost and found reporting) is built and tested in the cloud; the check on the owner's laptop is pending.**
+**Stages 1 to 5 of 20 are complete and verified. Stage 6 (browse and search) is built and tested in the cloud; the check on the owner's laptop is pending.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).
 - Security headers and a CORS allow-list are in place.
 - Unknown URLs and malformed requests get clean, standard JSON error replies.
 - Bad settings and database problems stop the server with a plain-English explanation, never showing the password.
-- 350 automated tests pass (113 of them need a real database; see the setup guide).
+- 425 automated tests pass (156 of them need a real database; see the setup guide).
 - The connection to a real **MongoDB Atlas** cluster has been verified from the owner's laptop.
 - **Accounts and login (Stage 4):** sign-up, login, profile and password change; login tokens; roles (nobody can make themselves an administrator); a safe script for the first administrator; password-guessing protection. A Postman collection in `documentation/postman` lets you try it by clicking.
 

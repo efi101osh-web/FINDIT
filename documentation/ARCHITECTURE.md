@@ -290,7 +290,12 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 - **Who sees what:** everyone logged in sees the public view; the reporter also sees their private fields; an administrator also sees the reporter's contact details; a `CLOSED` report is a `404` for everyone else. The reporter's id is never sent, only `isMine`.
 - **Owner-only edit and close.** Administrator edit and close need an audit record first, so they arrive with the audit log in Stage 12. Until then an administrator gets `403`, like any other non-owner.
 - **Route order:** `/items/mine` is registered before `/items/:id` (a test proves it).
-- **Photos** are not part of a report yet (Stage 9). **Browse and search** over everyone's reports (`GET /items`) is Stage 6.
+- **Photos** are not part of a report yet (Stage 9).
+
+**As implemented in Stage 6 (browse and search)**
+- Files: `services/itemSearch.js` (a pure file that turns the request into a database query: escaping, splitting words, the filters, the sort orders; tested without a database), `itemService.browse`, the `listItemsQuery` rules in `validators/itemValidators.js`, and the route `GET /items` (registered before `/items/mine` and `/items/:id`).
+- **The query is built in one place** from validated values only, never from raw request data. The public list can see only the statuses `OPEN`, `POTENTIAL_MATCH`, `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN` and (on request) `RETURNED`. As a second safety belt, a status that may not be browsed matches nothing.
+- **Search reads public fields only**, so it cannot be used to guess private details. The list returns `toItemCard` cards for everyone, administrators included.
 
 ---
 

@@ -62,7 +62,7 @@
 | ID | Requirement | Priority | Stage |
 |---|---|---|---|
 | BRW-01 | Users can browse lost items, found items and recent reports as cards (photo, title, category, general location, date, status) | Must | 6–7 |
-| BRW-02 | Keyword search across title, description, brand and location (partial words work) | Must | 6 |
+| BRW-02 | Keyword search across title, description, brand and location (partial words work). Several words must all match. Private details are never searched | Must | 6 |
 | BRW-03 | Filters: report type, category, colour, location, status, date range | Must | 6 |
 | BRW-04 | Pagination (default 20, maximum 50) and sorting (newest, oldest, by event date) | Must | 6 |
 | BRW-05 | Closed reports never appear in public browsing | Must | 6 |

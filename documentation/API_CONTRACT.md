@@ -1,6 +1,6 @@
 # FINDIT: API Contract
 
-> **Status: 13 of the 37 endpoints are implemented and tested: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id` and `PATCH /items/:id/close`. Everything else below is design, not implemented.** (The Stage 5 item endpoints passed their tests in the cloud container and were then tried on the owner's laptop against Atlas through Postman, as reported by the owner.) Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
+> **Status: 14 of the 37 endpoints are implemented and tested: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id` and `PATCH /items/:id/close`. Everything else below is design, not implemented.** (The Stage 5 item endpoints passed their tests in the cloud container and were then tried on the owner's laptop against Atlas through Postman, as reported by the owner. `GET /items` (Stage 6) has passed its tests in the cloud container; the check on the owner's laptop is pending.) Each endpoint is marked implemented only in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) after it has been run and tested. If the implementation has to differ, this file is updated in the same change.
 
 The mobile app and the admin dashboard use **the same API** with the same rules.
 
@@ -494,23 +494,32 @@ curl -X POST "$API/items" -H "Authorization: Bearer $TOKEN" -H "Content-Type: ap
 
 ### 8.2 `GET /items`
 
-- **Purpose:** Browse and search reports (the public view: no private fields).
-- **Auth:** required. **Role:** any.
+- **Purpose:** Browse and search everyone's reports. This is the public view: cards only, never private fields.
+- **Auth:** required. **Role:** any. Administrators and recovery officers get exactly the same cards as everyone else (the private fields stay in `GET /items/:id`).
 - **Query parameters** (all optional):
 
 | Parameter | Meaning |
 |---|---|
-| `q` | Keyword, 2–60 characters. Matches title, description, brand, location (partial words) |
+| `q` | Keyword, 2 to 60 characters after trimming, no control characters. Split into words; **every word must match** at least one of: the title, the description, the brand, the location detail (for example a hall's name), or the **name** of the place's zone (so `residence` finds reports in the halls of residence). Partial words work (`head` finds "headphones"), letter case is ignored, and the order of words does not matter. Only the first 5 words are used. Characters such as `.` `*` `(` `[` are plain text, never a pattern. |
 | `reportType` | `LOST` or `FOUND` |
-| `category`, `colour`, `location` | Exact values from the lists (`location` filters `generalLocation`) |
-| `status` | One status. Default: active reports (`OPEN`, `POTENTIAL_MATCH`, `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN`). `RETURNED` may be requested. `CLOSED` is never public |
-| `dateFrom`, `dateTo` | `YYYY-MM-DD`; filters `dateOccurred` |
-| `sort` | `newest` (default), `oldest`, `eventNewest`, `eventOldest` |
-| `page`, `limit` | Pagination |
+| `category`, `colour` | Exact values from the lists |
+| `location` | A zone code from `GET /meta/options` (for example `MALE_HALLS`); filters `generalLocation` |
+| `status` | One of `OPEN`, `POTENTIAL_MATCH`, `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN`, `RETURNED`. **Default: the first four** (active reports). `RETURNED` is shown only when asked for. **`CLOSED` is refused with `400`**: closed reports are never public |
+| `dateFrom`, `dateTo` | `YYYY-MM-DD`, a real calendar date. Filters the date the item was lost or found, **inclusive at both ends**. `dateTo` must not be earlier than `dateFrom`. Unlike a new report, these dates may be in the future or long ago |
+| `sort` | `newest` (default; by when the report was made), `oldest`, `eventNewest` (by the date lost or found), `eventOldest`. The report id is always the final tie-breaker, so paging never repeats or skips a report |
+| `page`, `limit` | `page` from 1 (default 1). `limit` 1 to **50** (default 20) |
 
-- **Response `200`:** `data` = array of `ItemCard`, plus `meta`.
-- **Errors:** `400 VALIDATION_ERROR` (unknown parameter or value not allowed)
-- **Example:** `curl "$API/items?reportType=FOUND&category=ELECTRONICS&q=head&page=1" -H "Authorization: Bearer $TOKEN"`
+- **What can never be searched:** the private details, the private storage location, the close reason, and the reporter's name or email. Search finds only what any user could already read on a card or the public detail view, so it cannot be used to guess a secret.
+- **Refused with `400`** (nothing is run): an unknown parameter; a repeated parameter (`limit=2&limit=3`); an operator-style value (`category[$ne]=KEYS`, `q[$regex]=.*`); a value not on the lists; `q` shorter than 2 or longer than 60 characters; a bad or impossible date; a backwards date range; `limit` above 50 or below 1.
+- **Response `200`:** `data` = array of `ItemCard` plus `meta` (`page`, `limit`, `total`, `totalPages`). The viewer's own active reports are included, marked `isMine: true`. A search with no match, or a page past the end, is `200` with an empty `data` (and the true `total`).
+- **Errors:** `400 VALIDATION_ERROR` · `401 UNAUTHENTICATED`
+- **Examples:**
+
+```bash
+curl "$API/items?reportType=FOUND&category=ELECTRONICS&q=head&page=1" -H "Authorization: Bearer $TOKEN"
+curl "$API/items?q=black%20headphones&location=LIBRARY&sort=eventNewest" -H "Authorization: Bearer $TOKEN"
+curl "$API/items?dateFrom=2026-11-01&dateTo=2026-11-30&limit=10" -H "Authorization: Bearer $TOKEN"
+```
 
 ### 8.3 `GET /items/mine`
 
@@ -919,6 +928,7 @@ The numbers are an example of the shape only.
 
 | Date | Change |
 |---|---|
+| 2026-11-24 | Stage 6 implemented `GET /items` (browse and search). Changes from the design: several search words must **all** match (in any order); the zone's name is searched as well as the location detail; only the first 5 words are used; `status=CLOSED` is refused with `400` rather than silently ignored; date filters may be any real date; the report id is the sort tie-breaker so paging is stable |
 | 2026-11-24 | Stage 5 implemented `GET /meta/options` and 5 item endpoints (create, mine, get one, edit, close). Changes from the design: places are now **zones plus a detail** (`generalLocation` is a zone code, new field `locationDetail`; section 4.2); `images` and the `image` link are deferred to Stage 9; administrator edit and close are deferred to Stage 12 (audit log first); date rule is `YYYY-MM-DD`, at most one day ahead and 365 days back; `/meta/options` returns a smaller set of lists for now |
 | 2026-11-23 | Stage 4 implemented 6 endpoints (register, login, `/auth/me`, `/users/me`, profile update, password change). Changes from the design: rate limits redesigned (section 1.6: failed logins per address + email, register per address, general limit 600); section 1.7 added (token details); `profileImage` deferred to Stage 9; new password must differ from the current one |
 | 2026-11-22 | Initial design (Stage 1). 37 endpoints planned. Added beyond the original brief: `/health`, `/meta/options`, `PATCH /users/me/password`, `POST /uploads/images`, `GET /items/mine`, `POST /claims/:id/respond`, `PATCH /claims/:id/withdraw`, `GET /claims/mine`, `PATCH /notifications/read-all`, `PATCH /admin/items/:id/status`, `GET /admin/claims/:id`, `PATCH /admin/users/:id`, `GET /admin/audit-records`, `PATCH /admin/recovery-records/:id` |
