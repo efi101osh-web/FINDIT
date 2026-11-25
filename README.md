@@ -12,7 +12,7 @@ FINDIT is a connected system that helps campus users report lost and found items
 
 ## Current status
 
-**Stages 1 to 6 of 20 are complete and verified. Stage 7 (the mobile app) is started: checkpoint 7a is built and tested in the cloud, and waiting to be opened on a phone.**
+**Stages 1 to 6 of 20 are complete and verified. Stage 7 (the mobile app) is started: checkpoint 7a is built, tested, and has been opened on the owner's phone in Expo Go.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).

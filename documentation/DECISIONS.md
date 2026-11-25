@@ -108,7 +108,7 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Consequence:** Atlas itself (accounts, network allow-list, the real cluster) can only be verified on the owner's laptop, because the container cannot reach it.
 
 ## D-019: Expo SDK version
-**Status:** Accepted (Stage 7). **Chosen: Expo SDK 58** (React Native 0.88.1, React 19.3.0). *Confirmed only when the app first opens on the owner's phone.*
+**Status:** Accepted (Stage 7). **Chosen: Expo SDK 58** (React Native 0.88.1, React 19.3.0). *Confirmed on 2026-11-25: the app opened in the owner's Expo Go (owner-reported).*
 **Issue:** Expo Go on your phone only runs projects built for the SDK it supports, and the newest Expo Go opens only the newest SDK.
 **Decision:** the owner reported that their Expo Go supports SDK 58, and Expo's own release notes say SDK 58 (15 October 2026) is the current one that the store version of Expo Go is meant to open. The project was created for SDK 58. If Expo Go ever says the project is for an incompatible SDK, the project is recreated for the SDK it names; the screens and logic would carry over unchanged.
 
