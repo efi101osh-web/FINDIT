@@ -141,7 +141,7 @@ mobile-app/
 - **Token storage:** `expo-secure-store` (encrypted on the device).
 - **Expo-Go-safe libraries only:** React Navigation, `expo-secure-store`, `expo-image-picker`. Anything that needs a custom native build needs your explicit approval first.
 - **Configuration:** the backend address is read from `EXPO_PUBLIC_API_URL`. It is public by design (it ends up inside the app), so **no secret ever goes in the mobile app**.
-- **Expo SDK version:** chosen at Stage 7 to match the version your phone's Expo Go supports.
+- **Expo SDK version:** SDK 58 (React Native 0.88.1, React 19.3.0), chosen in Stage 7 to match the owner's Expo Go (D-019).
 
 ---
 
@@ -296,6 +296,15 @@ Known limitation (accepted): a photo uploaded but never attached to a report sta
 - Files: `services/itemSearch.js` (a pure file that turns the request into a database query: escaping, splitting words, the filters, the sort orders; tested without a database), `itemService.browse`, the `listItemsQuery` rules in `validators/itemValidators.js`, and the route `GET /items` (registered before `/items/mine` and `/items/:id`).
 - **The query is built in one place** from validated values only, never from raw request data. The public list can see only the statuses `OPEN`, `POTENTIAL_MATCH`, `UNDER_VERIFICATION`, `APPROVED_FOR_RETURN` and (on request) `RETURNED`. As a second safety belt, a status that may not be browsed matches nothing.
 - **Search reads public fields only**, so it cannot be used to guess private details. The list returns `toItemCard` cards for everyone, administrators included.
+
+**As implemented in Stage 7, checkpoint 7a (mobile app foundation)**
+- `mobile-app/` (Expo SDK 58, JavaScript). `App.js` wraps the app in `SafeAreaProvider`, `AuthProvider` and `NavigationContainer`. `RootNavigator` chooses by login state alone: `AuthStack` (Welcome, Login, Register) or `AppStack` (the five tabs: Home, Search, Report, My reports, Profile).
+- **Theme:** `src/theme` holds the design tokens of section 12 as code (`colors`, `spacing`, `typography`, `statusColors`). `tests/contrast.test.js` measures every text pair, so a colour change that makes text unreadable fails a test.
+- **Components** (one job each): `Screen`, `Button`, `TextField`, `ItemCard`, `StatusBadge`/`TypeBadge`, `Chip`, `Notice`, `Logo`, and the three state views `LoadingView`, `EmptyState`, `ErrorView`. Touch targets are at least 44 points, errors are announced to screen readers, and every card has one spoken description.
+- **Data flow:** screens call `src/api/*` (`authApi`, `itemsApi`, `metaApi`). In 7a these return **preview data** shaped exactly like the real API (D-038); Stage 8 replaces their bodies. Place names are never hard-coded in the app: `useOptions` supplies the server's zone list and `placeText` turns a zone code and detail into words.
+- **The Home screen** handles loading, empty, error-with-retry and pull-to-refresh, and ignores a slow old answer that arrives after a newer one.
+- **Search, Report and My reports** are honest placeholders that say what is coming; they are built in checkpoint 7b.
+- **Nothing secret is in the app.** The preview login stores no token. In Stage 8 the token goes in `expo-secure-store`, and the server address is read from `EXPO_PUBLIC_API_URL`.
 
 ---
 

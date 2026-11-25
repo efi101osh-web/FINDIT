@@ -107,9 +107,10 @@ Decisions that depart from your brief are marked ⚠️. You can overrule any of
 **Rule that stays:** any check that could not be run is labelled "needs your laptop". It is never reported as passed.
 **Consequence:** Atlas itself (accounts, network allow-list, the real cluster) can only be verified on the owner's laptop, because the container cannot reach it.
 
-## D-019: ⚠️ Expo SDK version
-**Status:** **Open: decide at Stage 7**
-**Issue:** Expo Go on your phone only runs projects built for the SDK versions it supports. We will read what your installed Expo Go supports and create the project for that SDK, then verify it on your phone.
+## D-019: Expo SDK version
+**Status:** Accepted (Stage 7). **Chosen: Expo SDK 58** (React Native 0.88.1, React 19.3.0). *Confirmed only when the app first opens on the owner's phone.*
+**Issue:** Expo Go on your phone only runs projects built for the SDK it supports, and the newest Expo Go opens only the newest SDK.
+**Decision:** the owner reported that their Expo Go supports SDK 58, and Expo's own release notes say SDK 58 (15 October 2026) is the current one that the store version of Expo Go is meant to open. The project was created for SDK 58. If Expo Go ever says the project is for an incompatible SDK, the project is recreated for the SDK it names; the screens and logic would carry over unchanged.
 
 ## D-020: `mobile-app/` and `admin-dashboard/` are created by their own tools, later
 **Status:** Accepted (Stage 2)
@@ -229,6 +230,20 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 - **Strict query:** unknown, repeated and operator-style parameters are refused.
 **Why not MongoDB `$text`:** it does not match partial words (D-011). **Why not search the colour and category names:** they have their own filters, and the contract lists the searched fields.
 **Cost:** a partial-word search cannot use an index. At campus scale that is fine; see [SECURITY_PLAN.md](SECURITY_PLAN.md) risk 16.
+
+## D-038: Stage 7 in two checkpoints, with preview data behind the API files
+**Status:** Accepted (Stage 7)
+**Decision:** the mobile app is built in two steps so the riskiest part (phone, Expo Go and laptop talking to each other) is proved early. **7a:** the project, theme, navigation, Welcome, Login, Register, Home and Profile. **7b:** search, report details, the report forms (with the zone-then-detail place picker), my reports, profile editing. In both, the screens call small files in `src/api/`. Until Stage 8 those files return **preview data with exactly the shape of the real API replies**, and the app says so on screen ("Preview: ..."). Stage 8 replaces only the insides of those files with real calls, so the screens do not change.
+**Guard against drift:** tests compare the preview data with the backend's own code (the report-card fields, the place names, the password rules), so the preview can never quietly disagree with the real server.
+**Not built in the app yet:** claims, notifications and image upload screens. They arrive with Stages 11, 14 and 9, because they need those backend features.
+
+## D-039: Mobile toolchain
+**Status:** Accepted (Stage 7)
+**Decisions:**
+- **JavaScript, React Navigation 7, Context API, `fetch`** as already decided (D-012). The Expo starter project includes an `AGENTS.md` that recommends Expo Router and development builds. Those conflict with this project's fixed stack (React Navigation, Expo Go only), so they were not followed, and the starter's `AGENTS.md`, `.claude` plugin settings and `LICENSE` were not kept.
+- **Library versions come from the SDK's own list** (`node_modules/expo/bundledNativeModules.json`), because the cloud container cannot reach the Expo servers that `expo install` asks. They are installed with npm at exactly those versions.
+- **Tests:** `jest-expo` with `@testing-library/react-native` 14. The test-only packages `react-dom` and `react-server-dom-webpack` are pinned to **19.3.0**, the same as React, because React Native requires its renderer and React to match.
+- **Known advisory, accepted:** `npm audit` flags `react-server-dom-webpack@19.3.0` (critical, remote code execution in React Server Components *servers*) and `minimatch` (moderate, inside Expo's command-line tools). FINDIT runs no React Server Components server, the package is an unused test-time companion of `jest-expo` and is not in the app, and the patched 19.3.1 cannot be used because Expo SDK 58 pins React to 19.3.0. The suggested `minimatch` fix would downgrade Expo to version 52. To be revisited in Stage 16 and with each Expo patch release.
 
 ---
 

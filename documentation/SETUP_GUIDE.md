@@ -1,8 +1,8 @@
 # FINDIT: Setup Guide
 
-> **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend), Part 3 (create the database and run the server), Part 4 (first administrator), Part 5 (try the API with Postman), Part 6 (report lost and found items) and Part 7 (browse and search reports) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
+> **Status: PARTIAL.** Part 1 (getting your laptop ready), Part 2 (install and test the backend), Part 3 (create the database and run the server), Part 4 (first administrator), Part 5 (try the API with Postman), Part 6 (report lost and found items) Part 7 (browse and search reports) and Part 8 (run the mobile app in Expo Go) are written. Each later part is added **in the stage that creates the thing it sets up**, after being tested. The headings of those future parts are listed at the end so you know what is coming. They contain no instructions yet.
 >
-> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** **Part 6 was tested in the container (a live server, a real database and the Postman collection run with Newman: 26 requests, 0 failed) and then on the owner's Windows laptop against Atlas (owner-reported: the new requests and all 12 refusals gave their expected results). Part 7 was tested in the container, and then on the owner's laptop against Atlas as PowerShell requests (the same checks, run by a Claude Code session in VS Code; the Postman clicks themselves were not repeated there).** If your result differs, copy the whole terminal text and send it to the assistant.
+> **Verification status:** Part 2 was tested in a Linux cloud container (Node 22) and on the owner's Windows laptop (PowerShell, Node 24.20.0) as of Stage 2. **Part 3 was tested in the container against a real local MongoDB, and on 2026-11-23 on the owner's Windows laptop against a real MongoDB Atlas free cluster** (connection check and health page both succeeded). **Parts 4 and 5 were tested in the container (a live server, a real database and the Postman collection run with Newman: 11 requests, 19 checks, 0 failed) and then on the owner's Windows laptop against Atlas (first administrator created; every Postman request gave its expected result).** **Part 6 was tested in the container (a live server, a real database and the Postman collection run with Newman: 26 requests, 0 failed) and then on the owner's Windows laptop against Atlas (owner-reported: the new requests and all 12 refusals gave their expected results). Part 7 was tested in the container, and then on the owner's laptop against Atlas as PowerShell requests (the same checks, run by a Claude Code session in VS Code; the Postman clicks themselves were not repeated there). Part 8 was tested only as far as the cloud container allows (the app's tests, an Android bundle and Expo's development server answering); it has not yet been opened on a phone.** If your result differs, copy the whole terminal text and send it to the assistant.
 
 You will run FINDIT on **your own laptop**. The coding assistant writes code in the cloud and saves it to GitHub. You download it with Git, and then everything runs locally.
 
@@ -575,11 +575,83 @@ Please tell it: (1) the `npm test` result line, and (2) whether requests 13 to 1
 
 ---
 
+## Part 8. Run the mobile app in Expo Go (Stage 7, checkpoint 7a)
+
+**Goal:** see FINDIT on your phone for the first time. This step **needs no server and no Atlas**. The app runs on its own and shows clearly-labelled *preview* reports. Connecting it to the real server is Stage 8.
+
+**You need:** your Android phone with **Expo Go** installed (the one that supports SDK 58), and the laptop and phone on the **same Wi-Fi**.
+
+### 8.1 Get the latest code and install the app's libraries
+
+In a terminal, go to the **inner** project folder (the prompt should end in `...\FINDIT\FINDIT>`), then run these one at a time:
+
+```bash
+git pull
+```
+
+```bash
+cd mobile-app
+```
+
+```bash
+npm ci
+```
+
+`npm ci` can take a few minutes the first time. Yellow warnings and a note about vulnerabilities are expected (see the status file, section 5). **Do not** run `npm audit fix --force`.
+
+```bash
+npm test
+```
+
+**Success looks like:** `Tests: 111 passed, 111 total` and **0 failed**. (If it prints a warning that "Backend comparison tests are SKIPPED", run `npm ci` once in the `backend` folder, then try again. The numbers are then complete.)
+
+### 8.2 Start the app
+
+```bash
+npx expo start
+```
+
+**Success looks like:** a **QR code** in the terminal, and lines such as `Metro waiting on exp://192.168...`. Leave this window open.
+
+If Windows asks whether to allow **Node.js** through the firewall, see 8.5 before choosing.
+
+### 8.3 Open it on your phone
+
+1. Open **Expo Go** on the phone.
+2. Tap **Scan QR code** and point the camera at the QR code in the terminal. (If you do not see that option, use your phone's camera app and tap the link it shows.)
+3. The first start takes a minute, because the app is being built. You should see **FINDIT** and the Welcome screen.
+
+### 8.4 Try it
+
+- **Welcome:** FINDIT's purple look, the tagline "Find. Report. Reclaim.", and two buttons.
+- **Create an account** or **Log in:** try pressing the button with the boxes empty. You should get clear messages under each box. Then enter any email that looks real (for example `amina.yusuf@example.com`) and a password such as `Sunrise2026`. In this preview any valid-looking details open the sample app, and a blue note says so.
+- **Home:** a greeting with your name, two big buttons, a search box and a list of sample reports. Try the **All / Lost / Found** buttons, and pull the list down to refresh.
+- **Bottom tabs:** Home, Search, Report and My reports (these three say what is coming next), and **Profile**.
+- **Profile:** your name and email, and **Log out**, which takes you back to Welcome.
+
+Please also look for anything that seems wrong: text cut off, buttons hard to tap, something hidden behind the phone's top or bottom bar.
+
+### 8.5 If it will not connect
+
+| What you see | Meaning and fix |
+|---|---|
+| Windows asks to allow **Node.js** through the firewall | Your Wi-Fi may be classed as **Public**. Tick **Private networks** if offered. If the phone still cannot connect, try the next rows. Do not open it on a public network you do not trust, because it makes your laptop reachable there |
+| Expo Go says **"Could not connect to the server"** or hangs | The phone cannot reach the laptop. Check both are on the **same** Wi-Fi. Some campus Wi-Fi stops devices from talking to each other. Try your **phone's hotspot**: switch the laptop onto it, stop the app with `Ctrl+C`, and run `npx expo start` again |
+| Still nothing | Try `npx expo start --tunnel`. It may offer to install a helper (`@expo/ngrok`); say yes. It works through the internet, so it is slower but does not need the phone and laptop to see each other |
+| Expo Go says the project is for an **incompatible SDK version** | Tell the assistant exactly what it says. The project can be re-created for the SDK your Expo Go supports |
+| A **red error screen** in the app | Copy all the text on it and send it to the assistant |
+| `npm ci` fails | Copy the whole terminal text and send it to the assistant |
+
+### 8.6 What to tell the assistant
+
+(1) The `npm test` result line. (2) Whether the Welcome screen appeared on your phone, and which network worked (same Wi-Fi, hotspot or tunnel). (3) Anything that looked wrong, a screenshot if you can (nothing private appears in the sample app).
+
+---
+
 ## Future parts (headings only; nothing written yet)
 
 | Part | Written in |
 |---|---|
-| 8. Create and run the mobile app in Expo Go | Stage 7 |
 | 9. Connect your phone to the backend (finding your laptop's IP address, Wi-Fi and firewall troubleshooting) | Stage 8 |
 | 10. Set up Cloudinary | Stage 9 |
 | 11. Run the admin dashboard | Stage 12 |

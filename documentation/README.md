@@ -17,7 +17,7 @@ Start with [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md). To see what is actually b
 | [DECISIONS.md](DECISIONS.md) | Why each technical choice was made | Living |
 | [TEST_PLAN.md](TEST_PLAN.md) | Test strategy, test cases, checklists, the end-to-end script | Plan. 425 automated tests so far (see results log) |
 | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | What exists and what is verified | Living |
-| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, first administrator, Postman, reporting items, browse and search) |
+| [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to set up and run the project | Partial (laptop setup, database, first administrator, Postman, reporting items, browse and search, running the mobile app) |
 | [USER_GUIDE.md](USER_GUIDE.md) | How to use the finished app | Outline only (written in Stage 19) |
 | [TEAM_RESPONSIBILITIES.md](TEAM_RESPONSIBILITIES.md) | Who does what (non-coding roles for the team) | Draft. Names needed |
 | [postman/](postman/) | Postman collection for trying the API by clicking (35 requests with built-in checks) | Living (extended each stage) |
