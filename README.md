@@ -12,7 +12,7 @@ FINDIT is a connected system that helps campus users report lost and found items
 
 ## Current status
 
-**Stages 1 to 5 of 20 are complete and verified. Stage 6 (browse and search) is built and tested in the cloud; the check on the owner's laptop is pending.**
+**Stages 1 to 6 of 20 are complete and verified. Next is Stage 7, the mobile app.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).
@@ -22,6 +22,8 @@ What exists and is tested:
 - 425 automated tests pass (156 of them need a real database; see the setup guide).
 - The connection to a real **MongoDB Atlas** cluster has been verified from the owner's laptop.
 - **Accounts and login (Stage 4):** sign-up, login, profile and password change; login tokens; roles (nobody can make themselves an administrator); a safe script for the first administrator; password-guessing protection. A Postman collection in `documentation/postman` lets you try it by clicking.
+- **Lost and found reports (Stage 5):** report a lost or found item (the campus place is chosen as a zone plus a detail, such as which hall); see your own reports; edit and close them. Private details are visible only to the reporter and to administrators.
+- **Browse and search (Stage 6):** a public list of everyone's active reports with keyword search (partial words work), filters, sorting and paging. Closed reports and private details never appear, and search text is treated as plain text, never as a pattern.
 
 Everything else (database, accounts, items, claims, the apps) is **planned, not built**. The honest, always-current record is [documentation/IMPLEMENTATION_STATUS.md](documentation/IMPLEMENTATION_STATUS.md).
 

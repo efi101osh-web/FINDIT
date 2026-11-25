@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-24 (Stage 6 built and tested in the container; the owner's laptop check is pending)
+**Last updated:** 2026-11-25 (end of Stage 6)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -10,9 +10,9 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 6: Browsing and search (built and tested in the container; the owner's laptop check is pending) |
-| **State** | ⚠️ **Stage 6 is built and verified in the container only** (425 automated tests, 30 deliberately planted bugs each caught, a live end-to-end run with Newman: 35 requests, 0 failed); **it needs the owner's laptop check** (steps in [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 7). ✅ **Stages 1 to 5 are complete and verified.** Stage 5: in the container (350 automated tests, 34 deliberately planted bugs each caught, a live end-to-end run with Newman) **and on the owner's laptop against Atlas** (the tests ran as 237 passed and 113 skipped, 0 failed; the new Postman requests and all 12 refusals gave their expected results, owner-reported). Stages 1 to 4: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
-| **Next stage** | Stage 7: Mobile app foundation and screens (after the owner confirms Stage 6 on their laptop) |
+| **Current stage** | Stage 6: Browsing and search (complete) |
+| **State** | ✅ **Stages 1 to 6 are complete and verified.** Stage 6: in the container (425 automated tests, 30 deliberately planted bugs each caught, a live end-to-end run with Newman: 35 requests, 0 failed) **and on the owner's laptop against Atlas** (269 passed, 156 skipped, 0 failed; 14 PowerShell checks passed, run by a Claude Code session in VS Code and relayed by the owner; the Postman collection itself was not clicked through there). Stage 5: in the container (350 automated tests, 34 deliberately planted bugs each caught, a live end-to-end run with Newman) **and on the owner's laptop against Atlas** (the tests ran as 237 passed and 113 skipped, 0 failed; the new Postman requests and all 12 refusals gave their expected results, owner-reported). Stages 1 to 4: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
+| **Next stage** | Stage 7: Mobile app foundation and screens |
 | **What works today** | **Stage 6**: browse everyone's active reports and search them by keyword (partial words work, several words must all match, the place name is searched too); filter by type, category, colour, place, status and date range; sort four ways and page through; closed reports and private details are never in the list or the search. **Stage 5**: report a lost or found item, with the campus place chosen as a zone and a detail (which hall, which library, which class); see your own reports; open one report; edit and close your own report; the private details of a report are visible only to its reporter and to administrators (the reporter's contact details only to administrators); closed reports vanish for everyone else. **Stage 4**: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: items, claims, recovery, notifications, image upload, matching, mobile app, admin dashboard |
 
@@ -25,7 +25,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 3 | Backend foundation and MongoDB connection | ✅ | Verified in the container (real local MongoDB) and on the owner's laptop against Atlas |
 | 4 | Authentication and user management | ✅ | Verified in the container and on the owner's laptop against Atlas. Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
 | 5 | Lost and found item reporting | ✅ | Verified in the container and on the owner's laptop against Atlas. **Deferred on purpose:** photos (Stage 9), administrator edit and close (Stage 12, because they need the audit log first) |
-| 6 | Browsing and search | ⚠️ | Built and tested in the container; needs the owner's laptop check. Photos on cards arrive with Stage 9 (`image` is `null` until then) |
+| 6 | Browsing and search | ✅ | Verified in the container and on the owner's laptop against Atlas. Photos on cards arrive with Stage 9 (`image` is `null` until then) |
 | 7 | Mobile app foundation and screens | ⬜ | Decision D-019 (Expo SDK) to be settled here |
 | 8 | Connect mobile app to backend | ⬜ | |
 | 9 | Image upload and storage | ⬜ | Needs a Cloudinary account |
@@ -45,14 +45,14 @@ This file is the **single source of truth for what actually exists and has been 
 
 | Component | Planned | Implemented | Verified |
 |---|---|---|---|
-| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **14**: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id`, `PATCH /items/:id/close` | Container, and the owner's laptop (Atlas, through Postman). For the 6 Stage 5 endpoints the laptop result is owner-reported ("it all went well") without the individual replies. `GET /items` (Stage 6): container only, **laptop check pending** |
+| API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **14**: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id`, `PATCH /items/:id/close` | Container, and the owner's laptop (Atlas, through Postman). For the 6 Stage 5 endpoints the laptop result is owner-reported ("it all went well") without the individual replies. `GET /items` (Stage 6): also checked on the laptop against Atlas with 14 PowerShell checks (run by a Claude Code session in VS Code, relayed by the owner) |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **2**: `users`, `items` | Container and the owner's Atlas database (the `items` collection is created by the server on its first start; not separately inspected in Atlas) |
 | Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | 0 | 0 |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
 | Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **10 implemented** (S-01 to S-04, S-07, S-10, S-14, S-15, S-16, S-24), **11 partial** (below) | Container: automated tests plus deliberately planted bugs |
 | Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 103 | 61 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
-| Automated tests (Jest) | n/a | 425 (269 run by default, 156 need a real database) | `test:db`: 425 of 425 pass. Default `npm test`: 269 pass, 156 skipped (container). Owner's laptop: last run on the Stage 5 commit `e810bbd` (237 passed, 113 skipped, 0 failed); the Stage 6 run is pending |
-| Postman collection ([documentation/postman](postman)) | n/a | 35 requests, 64 checks (4 walk-through requests and 5 refusals added for browse and search) | Newman against a live server: 0 failed requests; the only 2 failed checks are the optional administrator login, which needs the owner's own admin details. The first 26 requests also ran in the owner's Postman against Atlas (owner-reported); the new 9 are not yet run there |
+| Automated tests (Jest) | n/a | 425 (269 run by default, 156 need a real database) | `test:db`: 425 of 425 pass. Default `npm test`: 269 pass, 156 skipped (container). Owner's laptop (Stage 6 commit `4229a0b`): 269 passed, 156 skipped, 0 failed |
+| Postman collection ([documentation/postman](postman)) | n/a | 35 requests, 64 checks (4 walk-through requests and 5 refusals added for browse and search) | Newman against a live server: 0 failed requests; the only 2 failed checks are the optional administrator login, which needs the owner's own admin details. The first 26 requests also ran in the owner's Postman against Atlas (owner-reported); the new 9 were not clicked through in Postman there; the same checks were run as PowerShell requests instead (see Stage 6 on the owner's laptop) |
 
 **Implemented and tested** (S-15 and S-16 in Stage 3; the rest in Stage 4):
 - **S-01 Password hashing:** `bcryptjs`, cost 12 by default (never below 10 in production). The raw database value is a 60-character bcrypt hash.
@@ -250,8 +250,20 @@ Environment: Linux container (Node 22.23.5) with a real, throwaway MongoDB 8.0.1
 
 **Found and fixed while building:** a badly formatted date filter (for example `14/11/2026`) produced two messages for the same field. It now says once that the format is wrong.
 
+**On the owner's laptop and MongoDB Atlas, 2026-11-25**
+Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, npm 11.6.2, MongoDB Atlas free cluster, commit `4229a0b`, working tree clean. These checks were run by the **Claude Code extension in VS Code on the laptop** (a separate session from the cloud one) and the results were pasted by the owner. I did not watch them run.
+
+| Check | Result |
+|---|---|
+| `git pull` | ✅ Fast-forward to `4229a0b`. Windows Git printed `Unlink of file '.git/objects/pack/...idx' failed` after the fetch. It is harmless housekeeping (another program had the old file open); answering `n` is safe |
+| `npm ci` | ✅ 429 packages |
+| `npm test` | ✅ **269 passed, 156 skipped, 0 failed** |
+| `npm start` | ✅ `Connected to MongoDB (database "findit")` and `FINDIT API is running`; health check `200` with `database: connected`. (The first start the day before could not reach Atlas: a network problem, not the code) |
+| The Part 7 checks, as PowerShell requests against the running server | ✅ **14 of 14 passed:** 5 setup steps (register `201`, login `200`, report a lost item `201`, report a found item `201`, close the lost item `200`); browse `200`, search by part of a word `200`, filter and sort `200`, search with pattern characters `200`; and the 5 refusals, each `400` (one-letter search, `status=CLOSED`, `limit=500`, `category[$ne]=KEYS`, backwards date range). The session also confirmed that the found keys were listed, the closed report was not, no private field appeared on a card, and the fake account's name and email were not on any card |
+| Data added to Atlas | 1 fake account (`@example.com`) and 2 fake reports (the lost one is closed). No password, token or email was printed |
+
 **Not verified in Stage 6**
-- **The owner's laptop and Atlas.** `GET /items` has not run against the real Atlas database yet.
+- **The Postman collection import on the laptop** for the 9 new requests (the PowerShell requests copied their bodies and pass rules).
 - **Search speed with many reports.** A partial-word search scans, it cannot use an index. Only a small number of reports was tried. At campus scale this should be fast, but it was not measured with realistic volumes ([SECURITY_PLAN.md](SECURITY_PLAN.md) risk 16).
 - **Photos on cards** do not exist yet (`image` is `null`, Stage 9).
 
