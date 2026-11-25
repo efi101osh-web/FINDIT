@@ -36,6 +36,14 @@ export const COLOUR_LABELS = Object.freeze({
   MULTICOLOUR: 'Multicolour', OTHER: 'Other colour',
 });
 
+export const TIME_BAND_LABELS = Object.freeze({
+  MORNING: 'Morning (6 am to 12 pm)',
+  AFTERNOON: 'Afternoon (12 pm to 5 pm)',
+  EVENING: 'Evening (5 pm to 9 pm)',
+  NIGHT: 'Night (9 pm to 6 am)',
+  UNKNOWN: 'Not sure',
+});
+
 export const STATUS_LABELS = Object.freeze({
   OPEN: 'Open',
   POTENTIAL_MATCH: 'Possible match',

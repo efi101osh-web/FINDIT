@@ -52,14 +52,16 @@ describeWithBackend('the preview data has exactly the shape the real server send
     }
   });
 
-  test('the preview place list matches the backend: same codes, same names, same way of asking', () => {
-    for (const sample of sampleOptions.campusLocations) {
-      const real = campus.getZone(sample.code);
-      expect(real).toBeTruthy();
-      expect(sample.label).toBe(real.label);
-      expect(sample.detail.mode).toBe(real.detail.mode);
-      expect(sample.detail.hint).toBe(real.detail.hint);
-      for (const option of sample.detail.options || []) expect(real.detail.options).toContain(option);
-    }
+  test('the preview place list is EXACTLY the backend\'s list: same zones, names, hints and every hall and church', () => {
+    expect(JSON.parse(JSON.stringify(sampleOptions.campusLocations))).toEqual(JSON.parse(JSON.stringify(campus.LOCATION_ZONES)));
+  });
+
+  test('the preview lists of categories, colours, statuses and times are the backend\'s', () => {
+    expect(sampleOptions.categories).toEqual([...constants.CATEGORIES]);
+    expect(sampleOptions.colours).toEqual([...constants.COLOURS]);
+    expect(sampleOptions.timeBands).toEqual([...constants.TIME_BANDS]);
+    expect(sampleOptions.itemStatuses).toEqual([...constants.ITEM_STATUS_LIST]);
+    expect(sampleOptions.reportTypes).toEqual([...constants.REPORT_TYPES]);
+    expect(sampleOptions.contactPreferences).toEqual([...constants.CONTACT_PREFERENCES]);
   });
 });

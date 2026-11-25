@@ -2,7 +2,7 @@
 
 React Native + **Expo SDK 58** (JavaScript), opened on an Android phone with **Expo Go**. It is the phone side of FINDIT: *Find. Report. Reclaim.*
 
-> **Status (Stage 7, checkpoint 7a):** Welcome, Login, Register, Home and Profile screens, on **preview data**. The app does **not** talk to the server yet (Stage 8) and says so on screen. See [documentation/IMPLEMENTATION_STATUS.md](../documentation/IMPLEMENTATION_STATUS.md) for what is built and verified.
+> **Status (Stage 7):** Welcome, Login, Register, Home, Search, Report details, Report (lost and found), Edit report, My reports and Profile screens, on **preview data**. The app does **not** talk to the server yet (Stage 8) and says so on screen. See [documentation/IMPLEMENTATION_STATUS.md](../documentation/IMPLEMENTATION_STATUS.md) for what is built and verified.
 
 ## Run it
 
@@ -12,7 +12,7 @@ You need Node 22 or 24, and Expo Go on an Android phone, on the same Wi-Fi as th
 |---|---|
 | `npm ci` | Install the libraries exactly as recorded in `package-lock.json` (use this, not `npm install`) |
 | `npx expo start` | Start the app server and show a QR code for Expo Go |
-| `npm test` | Run the automated tests (111). No phone or server needed |
+| `npm test` | Run the automated tests (293). No phone or server needed |
 
 ## Folder map
 
@@ -20,12 +20,12 @@ You need Node 22 or 24, and Expo Go on an Android phone, on the same Wi-Fi as th
 App.js                 Entry point: providers + navigation
 src/
 ├── theme/             Colours, spacing, type, status colours (FINDIT's design tokens)
-├── components/        Button, TextField, ItemCard, StatusBadge, Chip, Notice, Logo, Screen, StateViews
+├── components/        Button, TextField, SelectField, ChoiceChips, DateField, SwitchRow, ReportForm, ItemCard, StatusBadge, Chip, Notice, Logo, Screen, StateViews
 ├── screens/           One file per screen
 ├── navigation/        RootNavigator, AuthStack, AppStack, MainTabs
 ├── context/           AuthContext (who is logged in)
-├── hooks/             useOptions (the server's lists of places etc.)
-├── api/               PREVIEW versions that return sample data (replaced by real calls in Stage 8)
+├── hooks/             useOptions (the server's lists of places etc.), useReportForm
+├── api/               PREVIEW versions (sample data, an in-memory report store, search); replaced by real calls in Stage 8
 └── utils/             validation, format, labels, place
 tests/                 Jest tests (jest-expo + Testing Library)
 ```

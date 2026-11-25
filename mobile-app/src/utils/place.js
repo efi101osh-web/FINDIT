@@ -18,3 +18,13 @@ export function placeZoneLine(zones, code, detail) {
   if (!label) return null;
   return detail && detail !== 'Not sure which' ? label : null;
 }
+
+export function zoneByCode(zones, code) {
+  return (zones || []).find((candidate) => candidate.code === code) || null;
+}
+
+/** The place a person must describe for a zone: a pick-list, a required note or an optional note. */
+export function detailRule(zones, code) {
+  const zone = zoneByCode(zones, code);
+  return zone ? zone.detail : null;
+}

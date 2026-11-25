@@ -70,3 +70,24 @@ describe('places', () => {
     expect(placeText([], 'MALE_HALLS', 'Winslow')).toBe('Winslow');
   });
 });
+
+describe('every icon the app uses is a real icon (a typo would show as an empty square)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(path.join(dir, entry.name)) : entry.name.endsWith('.js') ? [path.join(dir, entry.name)] : []));
+  const used = new Map(); // icon name -> a file that uses it
+  for (const file of walk(path.join(__dirname, '..', 'src'))) {
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      const names = [];
+      for (const match of line.matchAll(/\bicon[:=]\s*['"]([a-z0-9-]+)['"]/g)) names.push(match[1]);
+      if (/<Ionicons/.test(line)) for (const match of line.matchAll(/['"]([a-z][a-z0-9]*(?:-[a-z0-9]+)*)['"]/g)) names.push(match[1]);
+      for (const name of names) used.set(name, path.basename(file));
+    }
+  }
+  test('found a sensible number of icons to check', () => {
+    expect(used.size).toBeGreaterThan(15);
+  });
+  test('all of them exist', () => {
+    for (const [name, file] of used) expect([name, file, name in IONICONS]).toEqual([name, file, true]);
+  });
+});

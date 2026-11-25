@@ -236,6 +236,7 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 **Decision:** the mobile app is built in two steps so the riskiest part (phone, Expo Go and laptop talking to each other) is proved early. **7a:** the project, theme, navigation, Welcome, Login, Register, Home and Profile. **7b:** search, report details, the report forms (with the zone-then-detail place picker), my reports, profile editing. In both, the screens call small files in `src/api/`. Until Stage 8 those files return **preview data with exactly the shape of the real API replies**, and the app says so on screen ("Preview: ..."). Stage 8 replaces only the insides of those files with real calls, so the screens do not change.
 **Guard against drift:** tests compare the preview data with the backend's own code (the report-card fields, the place names, the password rules), so the preview can never quietly disagree with the real server.
 **Not built in the app yet:** claims, notifications and image upload screens. They arrive with Stages 11, 14 and 9, because they need those backend features.
+**Checkpoint 7b (done):** the preview now includes a small in-memory copy of the server's report rules, so creating, editing and closing a report behave as they will with the real server, and reports you create stay on the phone until the app closes. The full campus place list is a generated copy of the backend's (`previewZones.js`), so you can see every real hall and church now; a test fails if it ever differs.
 
 ## D-039: Mobile toolchain
 **Status:** Accepted (Stage 7)
@@ -244,6 +245,16 @@ Mongoose 9.12.3 (driver 7.8.0), Helmet 8.3.0, cors 2.8.6, mongodb-memory-server-
 - **Library versions come from the SDK's own list** (`node_modules/expo/bundledNativeModules.json`), because the cloud container cannot reach the Expo servers that `expo install` asks. They are installed with npm at exactly those versions.
 - **Tests:** `jest-expo` with `@testing-library/react-native` 14. The test-only packages `react-dom` and `react-server-dom-webpack` are pinned to **19.3.0**, the same as React, because React Native requires its renderer and React to match.
 - **Known advisory, accepted:** `npm audit` flags `react-server-dom-webpack@19.3.0` (critical, remote code execution in React Server Components *servers*) and `minimatch` (moderate, inside Expo's command-line tools). FINDIT runs no React Server Components server, the package is an unused test-time companion of `jest-expo` and is not in the app, and the patched 19.3.1 cannot be used because Expo SDK 58 pins React to 19.3.0. The suggested `minimatch` fix would downgrade Expo to version 52. To be revisited in Stage 16 and with each Expo patch release.
+
+## D-040: The report form
+**Status:** Accepted (Stage 7, checkpoint 7b)
+**Decisions:**
+- **One form, two uses.** Creating and editing share one form. When editing, the type (lost or found) cannot be changed, because the server never allows it.
+- **Zone first, then detail** (D-033). The question changes with the type ("Where do you think you lost it?" or "Where did you find it?") and says that the place is only a hint. A list zone shows a pick-list that includes "Not sure which".
+- **The date uses quick buttons and a typed date**, not a calendar pop-up. A calendar needs an extra native library that is not part of Expo Go, and most reports are about the last few days. Any date can still be typed (YYYY-MM-DD). "Today" means the date on the phone, which the server accepts (it allows one day of slack).
+- **The form checks, the server decides.** The app repeats the server's rules for instant feedback and never blocks something the server would accept (a test compares them on a table of cases and on every place name). The server's own error messages are shown if it still refuses.
+- **Private fields have their own white box** that says who can see them. They are never part of a card, a search, or the public report view.
+- **Closing asks first.** Closing hides the report from everyone else, so the app asks "Close this report?" before doing it. The closing reason (optional on the server) is not asked for yet.
 
 ---
 

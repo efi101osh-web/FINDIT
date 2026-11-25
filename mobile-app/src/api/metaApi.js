@@ -1,4 +1,4 @@
-// PREVIEW VERSION (Stage 7). Stage 8 calls GET /meta/options, which has no login requirement.
+// PREVIEW VERSION. Stage 8 calls GET /meta/options, which needs no login.
 import { delay } from './delay';
 import { sampleOptions } from './sampleData';
 

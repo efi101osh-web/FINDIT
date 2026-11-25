@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { AuthProvider } from '../src/context/AuthContext';
 import HomeScreen from '../src/screens/HomeScreen';
-import { resetOptionsCache } from '../src/hooks/useOptions';
+import { fire, makeNavigation } from './helpers/navigation';
 import { listItems } from '../src/api/itemsApi';
 import { sampleItems } from '../src/api/sampleData';
 import { signedInApi } from './helpers/authApi';
@@ -18,7 +18,7 @@ const deferred = () => {
 };
 
 async function showHome() {
-  const navigation = { navigate: jest.fn() };
+  const navigation = makeNavigation();
   await render(
     <AuthProvider api={signedInApi()}>
       <HomeScreen navigation={navigation} />
@@ -28,7 +28,6 @@ async function showHome() {
 }
 
 beforeEach(() => {
-  resetOptionsCache();
   listItems.mockReset();
 });
 
@@ -132,4 +131,21 @@ test('says plainly that the reports are a preview', async () => {
   listItems.mockResolvedValue(reply([]));
   await showHome();
   expect(screen.getByText(/Preview: these are sample reports/)).toBeOnTheScreen();
+});
+
+test('tapping a report opens it', async () => {
+  listItems.mockResolvedValue(reply([sampleItems[1]]));
+  const navigation = await showHome();
+  await waitFor(() => expect(screen.getByText('Set of keys on a red lanyard')).toBeOnTheScreen());
+  await fireEvent.press(screen.getByRole('button', { name: /Found: Set of keys on a red lanyard/ }));
+  expect(navigation.navigate).toHaveBeenLastCalledWith('ItemDetails', { id: 's2' });
+});
+
+test('coming back to the tab refreshes the list without showing the loading message again', async () => {
+  listItems.mockResolvedValueOnce(reply([sampleItems[0]])).mockResolvedValueOnce(reply([sampleItems[0], sampleItems[1]]));
+  const navigation = await showHome();
+  await waitFor(() => expect(screen.getByText('Black wireless headphones')).toBeOnTheScreen());
+  await act(async () => fire(navigation, 'focus'));
+  await waitFor(() => expect(screen.getByText('Set of keys on a red lanyard')).toBeOnTheScreen());
+  expect(screen.queryByText('Loading reports…')).toBeNull();
 });

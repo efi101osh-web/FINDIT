@@ -5,7 +5,7 @@ import { colors, MIN_TOUCH, radius, spacing, typography } from '../theme';
 
 /** A labelled text box with an error message underneath and (for passwords) a show/hide button. */
 const TextField = forwardRef(function TextField(
-  { label, value, onChangeText, error, helper, secure = false, style, ...inputProps },
+  { label, value, onChangeText, error, helper, secure = false, style, inputStyle, ...inputProps },
   ref
 ) {
   const [hidden, setHidden] = useState(secure);
@@ -20,7 +20,7 @@ const TextField = forwardRef(function TextField(
           secureTextEntry={hidden}
           placeholderTextColor={colors.muted}
           accessibilityLabel={label}
-          style={styles.input}
+          style={[styles.input, inputStyle]}
           {...inputProps}
         />
         {secure ? (

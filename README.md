@@ -7,12 +7,12 @@ FINDIT is a connected system that helps campus users report lost and found items
 | Part | Technology | State |
 |---|---|---|
 | **Backend API** | Node.js, Express, MongoDB, JWT | Foundation, database, accounts and login, lost and found reporting, and browse and search (see below) |
-| **Mobile app** | React Native, Expo Go | Started (Stage 7): Welcome, Login, Register, Home and Profile on preview data. Not connected to the server yet (Stage 8) |
+| **Mobile app** | React Native, Expo Go | Stage 7: Welcome, Login, Register, Home, Search, report details, report and edit forms, My reports and Profile, on preview data. Not connected to the server yet (Stage 8) |
 | **Admin dashboard** | React, Vite | Not started (Stage 12) |
 
 ## Current status
 
-**Stages 1 to 6 of 20 are complete and verified. Stage 7 (the mobile app) is started: checkpoint 7a is built, tested, and has been opened on the owner's phone in Expo Go.**
+**Stages 1 to 6 of 20 are complete and verified. Stage 7 (the mobile app) is under way: checkpoint 7a has been opened on the owner's phone in Expo Go; checkpoint 7b (search, report details, report forms, My reports) is built and tested in the cloud, and waiting to be opened on the phone.**
 
 What exists and is tested:
 - The backend connects to MongoDB and answers `GET /api/v1/health` (including whether the database is connected).

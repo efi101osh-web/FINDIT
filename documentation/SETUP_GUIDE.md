@@ -575,7 +575,7 @@ Please tell it: (1) the `npm test` result line, and (2) whether requests 13 to 1
 
 ---
 
-## Part 8. Run the mobile app in Expo Go (Stage 7, checkpoint 7a)
+## Part 8. Run the mobile app in Expo Go (Stage 7)
 
 **Goal:** see FINDIT on your phone for the first time. This step **needs no server and no Atlas**. The app runs on its own and shows clearly-labelled *preview* reports. Connecting it to the real server is Stage 8.
 
@@ -603,7 +603,7 @@ npm ci
 npm test
 ```
 
-**Success looks like:** `Tests: 111 passed, 111 total` and **0 failed**. The very first `npm test` after `npm ci` can be slow (a couple of minutes on a slower laptop), because Jest builds its memory the first time; later runs take about 20 seconds. (If it prints a warning that "Backend comparison tests are SKIPPED", run `npm ci` once in the `backend` folder, then try again. The numbers are then complete.)
+**Success looks like:** `Tests: 293 passed, 293 total` and **0 failed**. The very first `npm test` after `npm ci` can be slow (a couple of minutes on a slower laptop), because Jest builds its memory the first time; later runs take about 20 seconds. (If it prints a warning that "Backend comparison tests are SKIPPED", run `npm ci` once in the `backend` folder, then try again. The numbers are then complete.)
 
 ### 8.2 Start the app
 
@@ -631,6 +631,20 @@ If Windows asks whether to allow **Node.js** through the firewall, see 8.5 befor
 
 Please also look for anything that seems wrong: text cut off, buttons hard to tap, something hidden behind the phone's top or bottom bar.
 
+### 8.4b Try the new screens (checkpoint 7b)
+
+After logging in, these are real now (still on sample data; the app says so):
+
+- **Home:** tap any report card to open it.
+- **Report details:** a report that is not yours shows only public facts. Open **Black wireless headphones** or **Student ID card** (marked "Your report") to see the **private box** that only you can see, and the **Edit report** and **Close report** buttons. The ID card is "under verification", so it has no edit or close buttons and says why.
+- **Report tab:** choose **I lost something** or **I found something**. Try the place question: pick **Halls of residence (male)** and a second list of every hall appears (including Emerald Hall and Topaz Hall). Pick **Church or chapel** and you get the list of churches with a search box. Pick **Library** and you are asked for a short description instead. Use the **Today / Yesterday** buttons for the date. Press **Submit report** with boxes empty to see the messages, then fill it in and submit: your new report opens, with your private details shown.
+- **Edit report:** change something and **Save changes**. Press it again with nothing changed to see "Nothing has changed yet." Change the place to another area and notice the old hall or description is cleared.
+- **Close report:** you are asked first. After closing, the report disappears from Home and Search but stays in **My reports** marked **Closed**.
+- **Search tab:** try `head`, `lanyar`, `winslow`, `residence`, `black headphones`. Open **More filters** for category, colour, place and order. A search for a private detail (for example `earcup`) finds nothing, on purpose.
+- **My reports tab:** only your reports, with All / Lost / Found.
+
+Reports you make are kept on the phone only until you close the app completely. That is expected for now.
+
 ### 8.5 If it will not connect
 
 | What you see | Meaning and fix |
@@ -644,7 +658,7 @@ Please also look for anything that seems wrong: text cut off, buttons hard to ta
 
 ### 8.6 What to tell the assistant
 
-(1) The `npm test` result line. (2) Whether the Welcome screen appeared on your phone, and which network worked (same Wi-Fi, hotspot or tunnel). (3) Anything that looked wrong, a screenshot if you can (nothing private appears in the sample app).
+(1) The `npm test` result line. (2) Whether the Welcome screen appeared on your phone, and which network worked (same Wi-Fi, hotspot or tunnel). (3) Which of the 7b screens in 8.4b you tried, and which did not work. (4) Anything that looked wrong, a screenshot if you can (nothing private appears in the sample app).
 
 ---
 

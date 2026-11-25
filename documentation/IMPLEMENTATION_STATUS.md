@@ -1,4 +1,4 @@
-**Last updated:** 2026-11-25 (Stage 7 checkpoint 7a verified on the owner's laptop and phone; 7b not started)
+**Last updated:** 2026-11-25 (Stage 7 checkpoint 7b built and tested in the container; the phone check is pending)
 
 This file is the **single source of truth for what actually exists and has been verified**. Other documents describe the *design*. Only this one says what is *done*. Nothing is marked done until it has been run or tested, or its verification limitation is stated.
 
@@ -10,10 +10,10 @@ This file is the **single source of truth for what actually exists and has been 
 
 | | |
 |---|---|
-| **Current stage** | Stage 7: Mobile app foundation and screens (checkpoint 7a complete and verified; 7b not started) |
-| **State** | ✅ **Stage 7, checkpoint 7a is verified:** in the container (111 mobile tests, 31 deliberately planted bugs each caught, the app bundles for Android, Expo's real development server serves it) **and on the owner's laptop and Android phone** (the 111 tests pass on the laptop; the app opened in Expo Go and the owner logged in and out; owner-reported). ✅ **Stages 1 to 6 are complete and verified.** Stage 6: in the container (425 automated tests, 30 deliberately planted bugs each caught, a live end-to-end run with Newman: 35 requests, 0 failed) **and on the owner's laptop against Atlas** (269 passed, 156 skipped, 0 failed; 14 PowerShell checks passed, run by a Claude Code session in VS Code and relayed by the owner; the Postman collection itself was not clicked through there). Stage 5: in the container (350 automated tests, 34 deliberately planted bugs each caught, a live end-to-end run with Newman) **and on the owner's laptop against Atlas** (the tests ran as 237 passed and 113 skipped, 0 failed; the new Postman requests and all 12 refusals gave their expected results, owner-reported). Stages 1 to 4: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
-| **Next stage** | Stage 7, checkpoint 7b: search, report details, the report forms, my reports |
-| **What works today** | **Stage 7a (preview data, seen on the owner's phone)**: a mobile app skeleton in `mobile-app/` (Expo SDK 58) with the FINDIT look, Welcome, Login, Register, a Home screen with sample reports, and a Profile tab with Log out. **It does not talk to the server yet** (Stage 8) and says so on screen. **Stage 6**: browse everyone's active reports and search them by keyword (partial words work, several words must all match, the place name is searched too); filter by type, category, colour, place, status and date range; sort four ways and page through; closed reports and private details are never in the list or the search. **Stage 5**: report a lost or found item, with the campus place chosen as a zone and a detail (which hall, which library, which class); see your own reports; open one report; edit and close your own report; the private details of a report are visible only to its reporter and to administrators (the reporter's contact details only to administrators); closed reports vanish for everyone else. **Stage 4**: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
+| **Current stage** | Stage 7: Mobile app foundation and screens (7a complete and verified; 7b built, phone check pending) |
+| **State** | ⚠️ **Stage 7, checkpoint 7b is built and verified in the container only** (293 mobile tests, 48 deliberately planted bugs each caught, the app bundles for Android, Expo's real development server serves it); **the 7b screens have not been opened on a phone** (steps in [SETUP_GUIDE.md](SETUP_GUIDE.md) Part 8.4). ✅ **Stage 7, checkpoint 7a is verified:** in the container (111 mobile tests, 31 deliberately planted bugs each caught, the app bundles for Android, Expo's real development server serves it) **and on the owner's laptop and Android phone** (the 111 tests pass on the laptop; the app opened in Expo Go and the owner logged in and out; owner-reported). ✅ **Stages 1 to 6 are complete and verified.** Stage 6: in the container (425 automated tests, 30 deliberately planted bugs each caught, a live end-to-end run with Newman: 35 requests, 0 failed) **and on the owner's laptop against Atlas** (269 passed, 156 skipped, 0 failed; 14 PowerShell checks passed, run by a Claude Code session in VS Code and relayed by the owner; the Postman collection itself was not clicked through there). Stage 5: in the container (350 automated tests, 34 deliberately planted bugs each caught, a live end-to-end run with Newman) **and on the owner's laptop against Atlas** (the tests ran as 237 passed and 113 skipped, 0 failed; the new Postman requests and all 12 refusals gave their expected results, owner-reported). Stages 1 to 4: in the cloud container against a real MongoDB 8.0.17 (210 automated tests, 25 deliberately planted security bugs each caught, a live end-to-end run), **and on the owner's Windows laptop against a real MongoDB Atlas cluster** (tests, the first administrator, and every Postman request including the safety refusals) |
+| **Next stage** | Stage 8: connect the mobile app to the backend (after the owner confirms 7b on their phone) |
+| **What works today** | **Stage 7b (preview data, not yet seen on a phone)**: search with filters and sorting, a report's full details (private ones only on your own report), the lost and found report forms with the zone-then-detail place picker, editing and closing your own report (with a confirmation), and My reports. Reports you make are kept on the phone only until the app closes. **Stage 7a (preview data, seen on the owner's phone)**: a mobile app skeleton in `mobile-app/` (Expo SDK 58) with the FINDIT look, Welcome, Login, Register, a Home screen with sample reports, and a Profile tab with Log out. **It does not talk to the server yet** (Stage 8) and says so on screen. **Stage 6**: browse everyone's active reports and search them by keyword (partial words work, several words must all match, the place name is searched too); filter by type, category, colour, place, status and date range; sort four ways and page through; closed reports and private details are never in the list or the search. **Stage 5**: report a lost or found item, with the campus place chosen as a zone and a detail (which hall, which library, which class); see your own reports; open one report; edit and close your own report; the private details of a report are visible only to its reporter and to administrators (the reporter's contact details only to administrators); closed reports vanish for everyone else. **Stage 4**: sign-up, login, "who am I", profile update and password change; roles (a regular user can never become an admin by signing up); a safe script to create the first administrator; login tokens that cannot be forged; account suspension and role changes that take effect immediately; password-guessing protection; strict input checking that refuses unexpected fields |
 | **Everything else** | Planned only: claims, recovery, notifications, image upload, matching, the rest of the mobile app (checkpoint 7b, connecting it to the server), the admin dashboard |
 
 ## 2. Stages
@@ -26,7 +26,7 @@ This file is the **single source of truth for what actually exists and has been 
 | 4 | Authentication and user management | ✅ | Verified in the container and on the owner's laptop against Atlas. Admin management of other users (suspend, change roles) arrives with the dashboard in Stage 12 |
 | 5 | Lost and found item reporting | ✅ | Verified in the container and on the owner's laptop against Atlas. **Deferred on purpose:** photos (Stage 9), administrator edit and close (Stage 12, because they need the audit log first) |
 | 6 | Browsing and search | ✅ | Verified in the container and on the owner's laptop against Atlas. Photos on cards arrive with Stage 9 (`image` is `null` until then) |
-| 7 | Mobile app foundation and screens | 🟨 | **7a done** (project, theme, navigation, Welcome, Login, Register, Home, Profile, on preview data); verified in the container, on the owner's laptop and on the owner's phone. **7b to do:** search, report details, report forms, my reports. D-019 settled: Expo SDK 58 |
+| 7 | Mobile app foundation and screens | 🟨 | **7a done** (project, theme, navigation, Welcome, Login, Register, Home, Profile, on preview data); verified in the container, on the owner's laptop and on the owner's phone. **7b built** (search, report details, report and edit forms, My reports, on preview data); verified in the container, **phone check pending**. D-019 settled: Expo SDK 58 |
 | 8 | Connect mobile app to backend | ⬜ | |
 | 9 | Image upload and storage | ⬜ | Needs a Cloudinary account |
 | 10 | Matching system | ⬜ | |
@@ -47,11 +47,11 @@ This file is the **single source of truth for what actually exists and has been 
 |---|---|---|---|
 | API endpoints ([API_CONTRACT.md](API_CONTRACT.md)) | 37 | **14**: `GET /health`, `GET /meta/options`, `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /users/me`, `PATCH /users/me`, `PATCH /users/me/password`, `POST /items`, `GET /items`, `GET /items/mine`, `GET /items/:id`, `PATCH /items/:id`, `PATCH /items/:id/close` | Container, and the owner's laptop (Atlas, through Postman). For the 6 Stage 5 endpoints the laptop result is owner-reported ("it all went well") without the individual replies. `GET /items` (Stage 6): also checked on the laptop against Atlas with 14 PowerShell checks (run by a Claude Code session in VS Code, relayed by the owner) |
 | Database collections ([DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)) | 6 | **2**: `users`, `items` | Container and the owner's Atlas database (the `items` collection is created by the server on its first start; not separately inspected in Atlas) |
-| Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | **5 built on preview data** (Welcome, Login, Register, Home, Profile) and 3 placeholders (Search, Report, My reports) | Container (tests, bundle, dev server) and the owner's Android phone (owner-reported: opened in Expo Go, logged in and out). The other screens were not individually reported |
+| Mobile screens ([ARCHITECTURE.md](ARCHITECTURE.md#5-mobile-app-structure)) | 16 | **10 built on preview data** (Welcome, Login, Register, Home, Search, Report details, Report for lost and found, Edit report, My reports, Profile). **Not built:** Submit claim and My claims (Stage 11), Notifications (Stage 14), Edit profile (Stage 8) | Container (tests, bundle, dev server). On the owner's phone, 7a (Welcome, Login, Home, Profile) was reported working; **the 7b screens have not been opened on a phone** |
 | Dashboard pages ([ARCHITECTURE.md](ARCHITECTURE.md#6-admin-dashboard-structure)) | 10 | 0 | 0 |
 | Security controls ([SECURITY_PLAN.md](SECURITY_PLAN.md)) | 27 | **10 implemented** (S-01 to S-04, S-07, S-10, S-14, S-15, S-16, S-24), **11 partial** (below) | Container: automated tests plus deliberately planted bugs |
 | Planned backend test cases ([TEST_PLAN.md](TEST_PLAN.md)) | 103 | 61 covered by automated tests (T-ADM-01 only against a stand-in route until Stage 12) | Container |
-| Automated tests, mobile app (Jest + jest-expo) | n/a | 111 (all run by default) | 111 of 111 pass (container). Owner's laptop: 111 of 111 on the second run (the first run had 3 time-outs, see section 4) |
+| Automated tests, mobile app (Jest + jest-expo) | n/a | 293 (all run by default) | 293 of 293 pass (container). Owner's laptop: not yet run for 7b (for 7a it was 111 of 111 on the second run; the first run had 3 time-outs, see section 4) |
 | Automated tests, backend (Jest) | n/a | 425 (269 run by default, 156 need a real database) | `test:db`: 425 of 425 pass. Default `npm test`: 269 pass, 156 skipped (container). Owner's laptop (Stage 6 commit `4229a0b`): 269 passed, 156 skipped, 0 failed |
 | Postman collection ([documentation/postman](postman)) | n/a | 35 requests, 64 checks (4 walk-through requests and 5 refusals added for browse and search) | Newman against a live server: 0 failed requests; the only 2 failed checks are the optional administrator login, which needs the owner's own admin details. The first 26 requests also ran in the owner's Postman against Atlas (owner-reported); the new 9 were not clicked through in Postman there; the same checks were run as PowerShell requests instead (see Stage 6 on the owner's laptop) |
 
@@ -302,6 +302,30 @@ Environment (reported by the owner): Windows, PowerShell, Node 24.20.0, Android 
 - **The Register screen, the Home filters and pull-to-refresh, and the five tabs** were not individually reported on the phone (they pass their automated tests).
 - **The three placeholder tabs** have no function yet. Photos on cards arrive in Stage 9.
 
+### Stage 7, checkpoint 7b (search, details, report forms, my reports), 2026-11-25
+Environment: Linux container (Node 22.23.5). Expo SDK 58. **The 7b screens have never been opened on a phone.**
+
+| Check | Method | Result |
+|---|---|---|
+| All mobile tests | `npm test` in `mobile-app` | ✅ **293 of 293 pass** (16 suites), no warnings |
+| Tests can actually fail | **48 realistic bugs planted one at a time** across the form rules (a far-future or ancient date allowed, a hall not taken from the list, the library detail no longer required, limits raised, found-only fields sent on a lost report, text not trimmed, nothing-changed not noticed, a wrong date or month), the search (any word instead of all, private details searched, closed or returned reports in the list, a wrong sort, wrong paging, other people's reports in My reports), the store rules (strangers seeing private fields or closed reports, anyone editing, editing or closing in any status, an old place detail kept in a new zone) and the screens (form not checked, form not cleared, the wrong report opened, closing without asking, edit and close offered in any state, a one-letter search, a filter ignored, "Load more" replacing instead of adding, a slow old search overwriting a new one, a list that stays open, the wrong "Yesterday", Home cards not tappable) | ✅ **All 48 caught.** On the first run **44** were caught; **4 slipped through** because the sample reports contained no returned report, no closed report of someone else's, no other-person report with private data, and no description with spaces around it. Four tests were added and those four bugs were then caught. Afterwards the source was identical to a backup |
+| The app builds for Android | `expo export --platform android` | ✅ 2.5 MB bundle; every import resolves |
+| The real development server | `expo start --offline`; manifest and bundle requested the way Expo Go does | ✅ Manifest: app `FINDIT`, `runtimeVersion exposdk:58.0.0`. Bundle: `200`, 5.6 MB, no errors |
+| The form agrees with the server | The form's yes or no is compared with the backend's own `createItemSchema` on 26 cases, and with the backend's own place rules for **every hall, church and auditorium name** | ✅ Same answer every time |
+| The preview data agrees with the server | Tests read the backend's own code | ✅ The preview place list is **exactly** the backend's (every zone, hall and church); the preview report details have exactly the fields the server's `toItemDetail` sends, for a stranger and for the owner, lost and found, before and after editing and closing |
+| Icons | A test scans the app for every icon name it uses | ✅ All 20 are real icons (a typo would show as an empty square) |
+
+**Found and fixed while building**
+1. The "Private" box on the form had a light purple background, so its grey helper text would have been below the readable contrast your design document warns about (4.42:1). It is now a white box with a purple outline.
+2. After closing a report, "Closed" appeared twice on the screen (the status badge and a label). The label now reads "Closed on".
+3. A long list drew only its first 10 names until scrolled. The place lists are short (at most about 30 names), so they are now drawn in full.
+
+**Not verified in 7b**
+- **Opening any 7b screen on the phone:** the look, the keyboard, scrolling in the long lists, the pick-list windows (full-screen lists), how the date buttons feel, and whether text is cut off.
+- **Saving to the real server.** Everything here is preview data: a report you make is kept on the phone only until the app closes, and nothing is sent anywhere (Stage 8).
+- **The mobile tests on the owner's laptop** for 7b.
+- **Photos** (Stage 9), **claims** (Stage 11) and **notifications** (Stage 14) have no screens yet.
+
 ## 5. Known issues and open decisions
 
 | ID | Item | Decide / fix at |
@@ -341,13 +365,13 @@ documentation/postman/          FINDIT.postman_collection.json (35 requests, 64 
 mobile-app/                     Expo SDK 58 (JavaScript). Started in Stage 7
   App.js, app.json, package.json, package-lock.json
   src/theme/                    colors, spacing, typography, statusColors, navigationTheme
-  src/components/               Screen, Button, TextField, ItemCard, StatusBadge, Chip, Notice, Logo, StateViews
-  src/screens/                  Welcome, Login, Register, Home, Profile + placeholders (Search, Report, My reports)
+  src/components/               Screen, Button, TextField, SelectField, ChoiceChips, DateField, SwitchRow, ReportForm, ItemCard, StatusBadge, Chip, Notice, Logo, StateViews
+  src/screens/                  Welcome, Login, Register, Home, Search, ItemDetails, Report, EditReport, MyReports, Profile
   src/navigation/               RootNavigator, AuthStack, AppStack, MainTabs
-  src/context/, src/hooks/      AuthContext; useOptions
-  src/api/                      PREVIEW versions that return sample data until Stage 8
-  src/utils/                    validation, format, labels, place
-  tests/                        111 tests (+ helpers/)
+  src/context/, src/hooks/      AuthContext; useOptions, useReportForm
+  src/api/                      PREVIEW versions until Stage 8: sampleData, previewStore, previewSearch, previewZones, itemsApi, authApi, metaApi, ApiError
+  src/utils/                    validation, itemValidation, format, labels, place
+  tests/                        293 tests (+ helpers/)
 ```
 
 `admin-dashboard/` does not exist yet. It is created by its own tool in Stage 12.

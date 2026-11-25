@@ -33,10 +33,10 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const latestRequest = useRef(0); // so a slow, old answer never replaces a newer one
 
-  const load = useCallback(async (selected, { refresh = false } = {}) => {
+  const load = useCallback(async (selected, { refresh = false, quiet = false } = {}) => {
     const id = ++latestRequest.current;
     if (refresh) setRefreshing(true);
-    else setState((current) => ({ ...current, phase: 'loading' }));
+    else if (!quiet) setState((current) => ({ ...current, phase: 'loading' }));
     try {
       const { items } = await listItems({ reportType: selected === 'ALL' ? undefined : selected });
       if (id === latestRequest.current) setState({ phase: 'ready', items, message: null });
@@ -49,7 +49,9 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     load(filter);
-  }, [filter, load]);
+    // Coming back to this tab (for example after reporting something): refresh quietly.
+    return navigation.addListener ? navigation.addListener('focus', () => load(filter, { quiet: true })) : undefined;
+  }, [filter, load, navigation]);
 
   const header = (
     <View>
@@ -95,7 +97,7 @@ export default function HomeScreen({ navigation }) {
         testID="items-list"
         data={state.phase === 'ready' ? state.items : []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ItemCard item={item} zones={zones} />}
+        renderItem={({ item }) => <ItemCard item={item} zones={zones} onPress={() => navigation.navigate('ItemDetails', { id: item.id })} />}
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(filter, { refresh: true })} colors={[colors.primary]} tintColor={colors.primary} />}
